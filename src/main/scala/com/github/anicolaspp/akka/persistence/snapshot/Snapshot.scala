@@ -13,11 +13,11 @@ object Snapshot {
   def toMapRBDRow(metadata: SnapshotMetadata, snapshot: Array[Byte])(implicit connection: Connection): Document =
     connection.newDocument()
       .setId(id(metadata))
-      .set("meta", connection.newDocument()
-        .set("persistenceId", metadata.persistenceId)
-        .set("sequenceNr", metadata.sequenceNr)
-        .set("timestamp", metadata.timestamp))
-      .set("snapshot", snapshot)
+      .set(META, connection.newDocument()
+        .set(PERSISTENCE_ID, metadata.persistenceId)
+        .set(SEQUENCE_NR, metadata.sequenceNr)
+        .set(TIMESTAMP, metadata.timestamp))
+      .set(SNAPSHOT, snapshot)
 
   def id(metadata: SnapshotMetadata) = s"${metadata.persistenceId}_${metadata.sequenceNr}_${metadata.timestamp}"
 
@@ -25,15 +25,26 @@ object Snapshot {
     new ByteArraySerializer {
       override implicit val actorSystem: ActorSystem = system
     }
-      .fromBytes[Snapshot](document.getBinary("snapshot").array())
+      .fromBytes[Snapshot](document.getBinary(SNAPSHOT).array())
   }
     .map { snapshot =>
       SelectedSnapshot(
         SnapshotMetadata(
-          document.getString("meta.persistenceId"),
-          document.getLong("meta.sequenceNr"),
-          document.getLong("meta.timestamp")),
+          document.getString(META_PERSISTENCE_ID),
+          document.getLong(META_SEQUENCE_NR),
+          document.getLong(META_TIMESTAMP)),
         snapshot)
     }
     .toOption
+
+  lazy val PERSISTENCE_ID = "persistenceId"
+  lazy val SEQUENCE_NR = "sequenceNr"
+  lazy val TIMESTAMP = "timestamp"
+  lazy val SNAPSHOT = "snapshot"
+
+  lazy val META = "meta"
+
+  lazy val META_PERSISTENCE_ID = s"$META.$PERSISTENCE_ID"
+  lazy val META_SEQUENCE_NR = s"$META.$SEQUENCE_NR"
+  lazy val META_TIMESTAMP = s"$META.$TIMESTAMP"
 }

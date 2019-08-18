@@ -7,6 +7,7 @@ import com.github.anicolaspp.akka.persistence.ByteArraySerializer
 import com.github.anicolaspp.akka.persistence.MapRDB.{MAPR_CONFIGURATION_STRING, _}
 import com.github.anicolaspp.akka.persistence.ojai.StorePool
 import org.ojai.store.{Connection, DriverManager, QueryCondition, SortOrder}
+import Snapshot._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -30,9 +31,9 @@ class MapRDBSnapshotStore extends SnapshotStore
     val condition = connection
       .newCondition()
       .and()
-      .is("meta.timestamp", QueryCondition.Op.GREATER_OR_EQUAL, criteria.minTimestamp)
-      .is("meta.timestamp", QueryCondition.Op.LESS_OR_EQUAL, criteria.maxTimestamp)
-      .is("meta.sequenceNr", QueryCondition.Op.LESS_OR_EQUAL, criteria.maxSequenceNr)
+      .is(META_TIMESTAMP, QueryCondition.Op.GREATER_OR_EQUAL, criteria.minTimestamp)
+      .is(META_TIMESTAMP, QueryCondition.Op.LESS_OR_EQUAL, criteria.maxTimestamp)
+      .is(META_SEQUENCE_NR, QueryCondition.Op.LESS_OR_EQUAL, criteria.maxSequenceNr)
       .close()
       .build()
 
@@ -40,7 +41,7 @@ class MapRDBSnapshotStore extends SnapshotStore
       .newQuery()
       .where(condition)
       .limit(1)
-      .orderBy("_id", SortOrder.DESC)
+      .orderBy(MAPR_ENTITY_ID, SortOrder.DESC)
       .build()
 
     val it = storePool.getStoreFor(persistenceId).find(query).iterator()
@@ -66,7 +67,36 @@ class MapRDBSnapshotStore extends SnapshotStore
       .fold(e => Future.failed(e), identity)
   }
 
-  override def deleteAsync(metadata: SnapshotMetadata): Future[Unit] = ???
+  override def deleteAsync(metadata: SnapshotMetadata): Future[Unit] = Future {
+    val condition = connection
+      .newCondition()
+      .and()
+      .is(META_TIMESTAMP, QueryCondition.Op.EQUAL, metadata.timestamp)
+      .is(META_PERSISTENCE_ID, QueryCondition.Op.EQUAL, metadata.persistenceId)
+      .is(META_SEQUENCE_NR, QueryCondition.Op.EQUAL, metadata.sequenceNr)
+      .close()
+      .build()
 
-  override def deleteAsync(persistenceId: String, criteria: SnapshotSelectionCriteria): Future[Unit] = ???
+    deleteWithCondition(condition, metadata.persistenceId)
+  }
+
+  override def deleteAsync(persistenceId: String, criteria: SnapshotSelectionCriteria): Future[Unit] = Future {
+    val condition = connection
+      .newCondition()
+      .and()
+      .is(META_TIMESTAMP, QueryCondition.Op.GREATER_OR_EQUAL, criteria.minTimestamp)
+      .is(META_TIMESTAMP, QueryCondition.Op.LESS_OR_EQUAL, criteria.maxTimestamp)
+      .is(META_SEQUENCE_NR, QueryCondition.Op.GREATER_OR_EQUAL, criteria.minSequenceNr)
+      .is(META_SEQUENCE_NR, QueryCondition.Op.LESS_OR_EQUAL, criteria.maxSequenceNr)
+      .close()
+      .build()
+
+    deleteWithCondition(condition, persistenceId)
+  }
+
+  private def deleteWithCondition(condition: QueryCondition, persistenceId: String): Unit = {
+    val store = storePool.getStoreFor(persistenceId)
+
+    store.delete(store.find(connection.newQuery().where(condition)))
+  }
 }
