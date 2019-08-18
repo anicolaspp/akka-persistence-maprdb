@@ -12,11 +12,11 @@ import scala.collection.immutable
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
-class MapRDBAsyncWriteJournal extends AsyncWriteJournal
+class MapRDBJournal extends AsyncWriteJournal
   with ActorLogging
   with ByteArraySerializer {
 
-  import MapRDBAsyncWriteJournal._
+  import MapRDBJournal._
 
   implicit lazy val actorSystem: ActorSystem = context.system
 
@@ -54,57 +54,65 @@ class MapRDBAsyncWriteJournal extends AsyncWriteJournal
     messagesToDelete.foreach { document => store.update(document.getId, connection.newMutation().set(MAPR_DELETED_MARK, true)) }
   }
 
-  override def asyncReplayMessages(persistenceId: String, fromSequenceNr: Long, toSequenceNr: Long, max: Long)(recoveryCallback: PersistentRepr => Unit): Future[Unit] = Future {
-    val condition = connection
-      .newCondition()
-      .and()
-      .is(MAPR_ENTITY_ID, QueryCondition.Op.GREATER_OR_EQUAL, fromSequenceNr.toBinaryId())
-      .is(MAPR_ENTITY_ID, QueryCondition.Op.LESS_OR_EQUAL, toSequenceNr.toBinaryId())
-      .close()
-      .build()
+  override def asyncReplayMessages(persistenceId: String, fromSequenceNr: Long, toSequenceNr: Long, max: Long)(recoveryCallback: PersistentRepr => Unit): Future[Unit] = {
+    log.info("asyncReplayMessages")
 
-    val query = connection
-      .newQuery()
-      .where(condition)
-      .limit(max)
-      .build()
+    Future {
+      val condition = connection
+        .newCondition()
+        .and()
+        .is(MAPR_ENTITY_ID, QueryCondition.Op.GREATER_OR_EQUAL, fromSequenceNr.toBinaryId())
+        .is(MAPR_ENTITY_ID, QueryCondition.Op.LESS_OR_EQUAL, toSequenceNr.toBinaryId())
+        .close()
+        .build()
 
-    import scala.collection.JavaConverters._
+      val query = connection
+        .newQuery()
+        .where(condition)
+        .limit(max)
+        .build()
 
-    val store = storesPool.getStoreFor(persistenceId)
+      import scala.collection.JavaConverters._
 
-    store.find(query).asScala.foreach { doc =>
-      fromBytes[PersistentRepr](Journal.getBinaryRepresentationFrom(doc)) match {
-        case Success(pr) => recoveryCallback(pr)
-        case Failure(_) => Future.failed(throw new RuntimeException("asyncReplayMessages: Failed to deserialize PersistentRepr"))
+      val store = storesPool.getStoreFor(persistenceId)
+
+      store.find(query).asScala.foreach { doc =>
+        fromBytes[PersistentRepr](Journal.getBinaryRepresentationFrom(doc)) match {
+          case Success(pr) => recoveryCallback(pr)
+          case Failure(_) => Future.failed(throw new RuntimeException("asyncReplayMessages: Failed to deserialize PersistentRepr"))
+        }
       }
     }
   }
 
-  override def asyncReadHighestSequenceNr(persistenceId: String, fromSequenceNr: Long): Future[Long] = Future {
-    val condition = connection
-      .newCondition()
-      .is(MAPR_ENTITY_ID, QueryCondition.Op.GREATER_OR_EQUAL, fromSequenceNr.toBinaryId())
-      .build()
+  override def asyncReadHighestSequenceNr(persistenceId: String, fromSequenceNr: Long): Future[Long] = {
+    log.info("asyncReadHighestSequenceNr")
 
-    val query = connection
-      .newQuery()
-      .where(condition)
-      .select(MAPR_ENTITY_ID)
-      .orderBy(MAPR_ENTITY_ID, SortOrder.DESC)
-      .limit(1)
-      .build()
+    Future {
+      val condition = connection
+        .newCondition()
+        .is(MAPR_ENTITY_ID, QueryCondition.Op.GREATER_OR_EQUAL, fromSequenceNr.toBinaryId())
+        .build()
 
-    val it = storesPool.getStoreFor(persistenceId).find(query).iterator()
+      val query = connection
+        .newQuery()
+        .where(condition)
+        .select(MAPR_ENTITY_ID)
+        .orderBy(MAPR_ENTITY_ID, SortOrder.DESC)
+        .limit(1)
+        .build()
 
-    val highest = if (it.hasNext) {
-      BigInt(it.next().getBinary(MAPR_ENTITY_ID).array()).toLong
-    } else {
-      0
+      val it = storesPool.getStoreFor(persistenceId).find(query).iterator()
+
+      val highest = if (it.hasNext) {
+        BigInt(it.next().getBinary(MAPR_ENTITY_ID).array()).toLong
+      } else {
+        0
+      }
+
+      log.info(s"HIGHEST: $highest")
+      highest
     }
-
-    println(s"HIGHEST: $highest")
-    highest
   }
 
   private def asyncWriteBatch(a: AtomicWrite): Future[Try[Unit]] = Future
@@ -127,6 +135,6 @@ class MapRDBAsyncWriteJournal extends AsyncWriteJournal
   }
 }
 
-object MapRDBAsyncWriteJournal {
+object MapRDBJournal {
   lazy val PATH_CONFIGURATION_KEY = "akka-persistence-maprdb.path"
 }

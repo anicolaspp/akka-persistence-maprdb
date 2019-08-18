@@ -1,33 +1,80 @@
 package com.github.anicolaspp.akka.persistence.snapshot
 
 import akka.actor.{ActorLogging, ActorSystem}
+import akka.persistence.serialization.Snapshot
 import akka.persistence.snapshot.SnapshotStore
 import akka.persistence.{SelectedSnapshot, SnapshotMetadata, SnapshotSelectionCriteria}
 import com.github.anicolaspp.akka.persistence.ByteArraySerializer
 import com.github.anicolaspp.akka.persistence.MapRDB.MAPR_CONFIGURATION_STRING
-import com.github.anicolaspp.akka.persistence.journal.MapRDBAsyncWriteJournal.PATH_CONFIGURATION_KEY
+import com.github.anicolaspp.akka.persistence.journal.MapRDBJournal.PATH_CONFIGURATION_KEY
 import com.github.anicolaspp.akka.persistence.ojai.StorePool
-import org.ojai.store.{Connection, DriverManager}
+import org.ojai.store.{Connection, DriverManager, QueryCondition, SortOrder}
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 class MapRDBSnapshotStore extends SnapshotStore
   with ActorLogging
   with ByteArraySerializer {
-  override implicit val actorSystem: ActorSystem = context.system
 
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
+
   implicit val connection: Connection = DriverManager.getConnection(MAPR_CONFIGURATION_STRING)
   private val config = actorSystem.settings.config
-
   private val snapshotPath = config.getString(PATH_CONFIGURATION_KEY)
 
-  private val storePool = StorePool.snapshotFor(snapshotPath)
+  private val storePool = StorePool.snapshotStoreFor(snapshotPath)
 
-  override def loadAsync(persistenceId: String, criteria: SnapshotSelectionCriteria): Future[Option[SelectedSnapshot]] = ???
+  override implicit lazy val actorSystem: ActorSystem = context.system
+
+  override def loadAsync(persistenceId: String, criteria: SnapshotSelectionCriteria): Future[Option[SelectedSnapshot]] = Future {
+    log.info(s"LOADING SNAPSHOT: $criteria")
+
+    val condition = connection
+      .newCondition()
+      .and()
+      .is("meta.timestamp", QueryCondition.Op.GREATER_OR_EQUAL, criteria.minTimestamp)
+      .is("meta.timestamp", QueryCondition.Op.LESS_OR_EQUAL, criteria.maxTimestamp)
+      .is("meta.sequenceNr", QueryCondition.Op.LESS_OR_EQUAL, criteria.maxSequenceNr)
+      .close()
+      .build()
+
+    val query = connection
+      .newQuery()
+      .where(condition)
+      .limit(1)
+      .orderBy("_id", SortOrder.DESC)
+      .build()
+
+    val it = storePool.getStoreFor(persistenceId).find(query).iterator()
+
+    val last = if (it.hasNext) {
+      Some(it.next())
+    } else {
+      None
+    }
+
+    val snapshot = last.flatMap { doc =>
+      Try {
+        fromBytes[Snapshot](doc.getBinary("snapshot").array())
+      }
+        .map { s =>
+          SelectedSnapshot(SnapshotMetadata(persistenceId, doc.getLong("meta.sequenceNr"), doc.getLong("meta.timestamp")), s)
+        }
+        .toOption
+    }
+
+    log.info(snapshot.toString)
+
+    snapshot
+
+
+  }
 
   override def saveAsync(metadata: SnapshotMetadata, snapshot: Any): Future[Unit] = Future {
-    toBytes(snapshot.asInstanceOf[AnyRef])
+    log.info(s"SAVING SNAPSHOT: $metadata; $snapshot")
+
+    toBytes(akka.persistence.serialization.Snapshot(snapshot))
       .map { value =>
         val snapshot = Snapshot.toMapRBDRow(metadata, value)
 

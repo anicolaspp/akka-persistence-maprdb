@@ -10,7 +10,7 @@ trait StorePool {
 object StorePool {
   def journalFor(journalPath: String)(implicit connection: Connection): StorePool = storeFor(journalPath, Journal)
 
-  def snapshotFor(snapshotPath: String)(implicit connection: Connection): StorePool = storeFor(snapshotPath, Snapshot)
+  def snapshotStoreFor(snapshotPath: String)(implicit connection: Connection): StorePool = storeFor(snapshotPath, Snapshot)
 
   def storeFor(path: String, storeType: StoreType)(implicit connection: Connection): StorePool =
     MapRDBStorePool(path, storeType)
