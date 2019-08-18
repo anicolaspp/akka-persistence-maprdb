@@ -37,6 +37,7 @@ object SnapshotExample extends App {
   val system = ActorSystem("example")
   val persistentActor = system.actorOf(Props(classOf[ExamplePersistentActor]), "persistentActor-3-scala")
 
+  Thread.sleep(10000)
   persistentActor ! "a"
   persistentActor ! "b"
   persistentActor ! "snap"

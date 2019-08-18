@@ -1,10 +1,13 @@
 package com.github.anicolaspp.akka.persistence
 
+import java.nio.ByteBuffer
+
 import akka.actor.{ActorLogging, ActorSystem}
 import akka.persistence.journal.AsyncWriteJournal
 import akka.persistence.{AtomicWrite, PersistentRepr}
 import com.github.anicolaspp.akka.persistence.MapRDBAsyncWriteJournal._
-import org.ojai.store.{Connection, DriverManager, QueryCondition, SortOrder}
+import org.ojai.store.{Connection, DocumentStore, DriverManager, QueryCondition, SortOrder}
+import org.ojai.util.Documents
 
 import scala.collection.immutable
 import scala.concurrent.{ExecutionContext, Future}
@@ -22,14 +25,25 @@ class MapRDBAsyncWriteJournal extends AsyncWriteJournal with ActorLogging with B
 
   private val journalPath = config.getString(PATH_CONFIGURATION_KEY)
 
-  private def getStoreFor(persistentId: String) = {
+  private var stores = Map.empty[String, DocumentStore]
+
+  private def getStoreFor(persistentId: String): DocumentStore = {
 
     val storePath = journalPath + "/" + persistentId
 
-    if (connection.storeExists(storePath)) {
-      connection.getStore(storePath)
+    if (stores.contains(storePath)) {
+      stores(storePath)
     } else {
-      connection.createStore(storePath)
+
+      val store = if (connection.storeExists(storePath)) {
+        connection.getStore(storePath)
+      } else {
+        connection.createStore(storePath)
+      }
+
+      stores = stores + (storePath -> store)
+
+      store
     }
   }
 
@@ -65,7 +79,7 @@ class MapRDBAsyncWriteJournal extends AsyncWriteJournal with ActorLogging with B
   override def asyncDeleteMessagesTo(persistenceId: String, toSequenceNr: Long): Future[Unit] = Future {
     val condition = connection
       .newCondition()
-      .is(MAPR_ENTITY_ID, QueryCondition.Op.LESS_OR_EQUAL, toSequenceNr)
+      .is(MAPR_ENTITY_ID, QueryCondition.Op.LESS_OR_EQUAL, ByteBuffer.wrap(BigInt(toSequenceNr).toByteArray))
       .build()
 
     val query = connection
@@ -87,8 +101,8 @@ class MapRDBAsyncWriteJournal extends AsyncWriteJournal with ActorLogging with B
     val condition = connection
       .newCondition()
       .and()
-      .is(MAPR_ENTITY_ID, QueryCondition.Op.GREATER_OR_EQUAL, fromSequenceNr.toString)
-      .is(MAPR_ENTITY_ID, QueryCondition.Op.LESS_OR_EQUAL, toSequenceNr.toString)
+      .is(MAPR_ENTITY_ID, QueryCondition.Op.GREATER_OR_EQUAL, ByteBuffer.wrap(BigInt(fromSequenceNr).toByteArray))
+      .is(MAPR_ENTITY_ID, QueryCondition.Op.LESS_OR_EQUAL, ByteBuffer.wrap(BigInt(toSequenceNr).toByteArray))
       .close()
       .build()
 
@@ -113,7 +127,7 @@ class MapRDBAsyncWriteJournal extends AsyncWriteJournal with ActorLogging with B
   override def asyncReadHighestSequenceNr(persistenceId: String, fromSequenceNr: Long): Future[Long] = Future {
     val condition = connection
       .newCondition()
-      .is(MAPR_ENTITY_ID, QueryCondition.Op.GREATER_OR_EQUAL, fromSequenceNr.toString)
+      .is(MAPR_ENTITY_ID, QueryCondition.Op.GREATER_OR_EQUAL, ByteBuffer.wrap(BigInt(fromSequenceNr).toByteArray))
       .build()
 
     val query = connection
@@ -128,11 +142,17 @@ class MapRDBAsyncWriteJournal extends AsyncWriteJournal with ActorLogging with B
 
     val store = getStoreFor(persistenceId)
 
-    store.find(query)
-      .asScala
-      .headOption
-      .map(_.getString(MAPR_ENTITY_ID).toLong)
-      .getOrElse(0)
+    //    println(query.asJsonString())
+
+    val it = store.find(query).iterator()
+
+    val highest = if (it.hasNext) {
+      BigInt(it.next().getBinary(MAPR_ENTITY_ID).array()).toLong
+    } else {
+      0
+    }
+    println(s"HIGHEST: $highest")
+    highest
   }
 }
 

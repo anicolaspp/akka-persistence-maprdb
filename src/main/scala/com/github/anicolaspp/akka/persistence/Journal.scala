@@ -1,5 +1,8 @@
 package com.github.anicolaspp.akka.persistence
 
+import java.nio.ByteBuffer
+
+import com.google.common.primitives.Bytes
 import org.ojai.Document
 import org.ojai.store.Connection
 
@@ -14,7 +17,7 @@ object Journal {
   def toMapRDBRow(sequenceNr: Long, persistentRepr: Array[Byte], deleted: Boolean)(implicit connection: Connection) =
     connection
       .newDocument()
-      .setId(sequenceNr.toString)
+      .setId(ByteBuffer.wrap(BigInt(sequenceNr).toByteArray))
       .set(MAPR_BINARY_MARK, persistentRepr)
       .set(MAPR_DELETED_MARK, deleted)
 
