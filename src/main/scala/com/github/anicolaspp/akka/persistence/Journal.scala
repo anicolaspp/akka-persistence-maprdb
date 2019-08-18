@@ -1,4 +1,4 @@
-package com.github.anicolaspp.akka.persistent
+package com.github.anicolaspp.akka.persistence
 
 import org.ojai.store.Connection
 

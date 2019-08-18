@@ -1,4 +1,4 @@
-package com.github.anicolaspp.akka.persistent
+package com.github.anicolaspp.akka.persistence
 
 import akka.actor.{ActorLogging, ActorSystem}
 import akka.persistence.journal.AsyncWriteJournal

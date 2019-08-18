@@ -1,4 +1,4 @@
-package com.github.anicolaspp.akka.persistent
+package com.github.anicolaspp.akka.persistence
 package test
 
 import akka.persistence.CapabilityFlag
