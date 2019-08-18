@@ -1,7 +1,6 @@
 package com.github.anicolaspp.akka.persistence.snapshot
 
 import akka.actor.{ActorLogging, ActorSystem}
-import akka.persistence.serialization.Snapshot
 import akka.persistence.snapshot.SnapshotStore
 import akka.persistence.{SelectedSnapshot, SnapshotMetadata, SnapshotSelectionCriteria}
 import com.github.anicolaspp.akka.persistence.ByteArraySerializer
@@ -11,7 +10,6 @@ import com.github.anicolaspp.akka.persistence.ojai.StorePool
 import org.ojai.store.{Connection, DriverManager, QueryCondition, SortOrder}
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Try
 
 class MapRDBSnapshotStore extends SnapshotStore
   with ActorLogging
@@ -54,21 +52,11 @@ class MapRDBSnapshotStore extends SnapshotStore
       None
     }
 
-    val snapshot = last.flatMap { doc =>
-      Try {
-        fromBytes[Snapshot](doc.getBinary("snapshot").array())
-      }
-        .map { s =>
-          SelectedSnapshot(SnapshotMetadata(persistenceId, doc.getLong("meta.sequenceNr"), doc.getLong("meta.timestamp")), s)
-        }
-        .toOption
-    }
+    val snapshot = last.flatMap(Snapshot.fromMapRDBRow)
 
     log.info(snapshot.toString)
 
     snapshot
-
-
   }
 
   override def saveAsync(metadata: SnapshotMetadata, snapshot: Any): Future[Unit] = Future {
