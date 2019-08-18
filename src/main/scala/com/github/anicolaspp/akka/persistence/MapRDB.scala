@@ -14,5 +14,7 @@ object MapRDB {
   lazy val MAPR_DELETED_MARK = "deleted"
 
   lazy val MAPR_BINARY_MARK = "persistentRepr"
+
+  lazy val PATH_CONFIGURATION_KEY = "akka-persistence-maprdb.path"
 }
 

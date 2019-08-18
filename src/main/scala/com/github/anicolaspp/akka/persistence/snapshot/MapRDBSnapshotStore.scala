@@ -4,8 +4,7 @@ import akka.actor.{ActorLogging, ActorSystem}
 import akka.persistence.snapshot.SnapshotStore
 import akka.persistence.{SelectedSnapshot, SnapshotMetadata, SnapshotSelectionCriteria}
 import com.github.anicolaspp.akka.persistence.ByteArraySerializer
-import com.github.anicolaspp.akka.persistence.MapRDB.MAPR_CONFIGURATION_STRING
-import com.github.anicolaspp.akka.persistence.journal.MapRDBJournal.PATH_CONFIGURATION_KEY
+import com.github.anicolaspp.akka.persistence.MapRDB.{MAPR_CONFIGURATION_STRING, _}
 import com.github.anicolaspp.akka.persistence.ojai.StorePool
 import org.ojai.store.{Connection, DriverManager, QueryCondition, SortOrder}
 
@@ -52,11 +51,7 @@ class MapRDBSnapshotStore extends SnapshotStore
       None
     }
 
-    val snapshot = last.flatMap(Snapshot.fromMapRDBRow)
-
-    log.info(snapshot.toString)
-
-    snapshot
+    last.flatMap(Snapshot.fromMapRDBRow)
   }
 
   override def saveAsync(metadata: SnapshotMetadata, snapshot: Any): Future[Unit] = Future {
