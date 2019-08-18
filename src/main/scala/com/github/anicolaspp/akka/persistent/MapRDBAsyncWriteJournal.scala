@@ -58,7 +58,7 @@ class MapRDBAsyncWriteJournal extends AsyncWriteJournal with ActorLogging with B
         getStoreFor(pr.persistenceId).insert(Journal.apply(pr.sequenceNr, serialized, pr.deleted))
       }
 
-      case Failure(_) => Future.failed(new scala.RuntimeException("writeMessages: failed to write PersistentRepr to redis"))
+      case Failure(_) => Future.failed(new scala.RuntimeException("writeMessages: failed to write PersistentRepr to MapR-DB"))
     }
   }
 
