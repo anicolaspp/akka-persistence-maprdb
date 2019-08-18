@@ -13,6 +13,6 @@ trait ByteArraySerializer {
 
   def toBytes(data: AnyRef): Try[Array[Byte]] = serialization.serialize(data)
 
-  def fromBytes[T: ClassTag](a: Array[Byte]): Try[T] =
-    serialization.deserialize(a, classTag[T].runtimeClass.asInstanceOf[Class[T]])
+  def fromBytes[T: ClassTag](a: Array[Byte])(implicit actorSystem: ActorSystem): Try[T] =
+    SerializationExtension(actorSystem).deserialize(a, classTag[T].runtimeClass.asInstanceOf[Class[T]])
 }

@@ -3,21 +3,26 @@ package com.github.anicolaspp.akka.persistence
 import akka.actor.{ActorLogging, ActorSystem}
 import akka.persistence.journal.AsyncWriteJournal
 import akka.persistence.{AtomicWrite, PersistentRepr}
+import com.github.anicolaspp.akka.persistence.MapRDBAsyncWriteJournal._
 import org.ojai.store.{Connection, DriverManager, QueryCondition, SortOrder}
 
+import scala.collection.immutable
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 class MapRDBAsyncWriteJournal extends AsyncWriteJournal with ActorLogging with ByteArraySerializer {
 
   implicit lazy val actorSystem: ActorSystem = context.system
+
+  implicit val connection: Connection = DriverManager.getConnection(MAPR_CONFIGURATION_STRING)
+
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
 
   private val config = actorSystem.settings.config
 
-  private val journalPath = config.getString("akka-persistence-maprdb.path")
+  private val journalPath = config.getString(PATH_CONFIGURATION_KEY)
 
-  def getStoreFor(persistentId: String) = {
+  private def getStoreFor(persistentId: String) = {
 
     val storePath = journalPath + "/" + persistentId
 
@@ -28,38 +33,25 @@ class MapRDBAsyncWriteJournal extends AsyncWriteJournal with ActorLogging with B
     }
   }
 
-  implicit val connection: Connection = DriverManager.getConnection("ojai:mapr:")
+  override def asyncWriteMessages(messages: immutable.Seq[AtomicWrite]): Future[immutable.Seq[Try[Unit]]] = Future.sequence(messages.map(asyncWriteBatch))
 
-  //  private val store = connection.getStore(journalTable)
-
-  override def asyncWriteMessages(messages: Seq[AtomicWrite]): Future[Seq[Try[Unit]]] = {
-    Future.sequence(messages.map(asyncWriteBatch))
-  }
-
-  private def asyncWriteBatch(a: AtomicWrite): Future[Try[Unit]] = {
-    val batch = Future
-      .sequence(a.payload.map(asyncWriteOperation))
-      .map(u => Success(u))
-      .recover {
-        case e => Failure(e)
-      }
-      .collect {
-        case Failure(exception) => Failure(exception)
-        case Success(value) => Success({})
-      }
-
-    batch
-  }
-
-  private def asyncWriteOperation(pr: PersistentRepr): Future[Unit] = {
-
-    toBytes(pr) match {
-      case Success(serialized) => Future {
-        getStoreFor(pr.persistenceId).insert(Journal.apply(pr.sequenceNr, serialized, pr.deleted))
-      }
-
-      case Failure(_) => Future.failed(new scala.RuntimeException("writeMessages: failed to write PersistentRepr to MapR-DB"))
+  private def asyncWriteBatch(a: AtomicWrite): Future[Try[Unit]] = Future
+    .sequence(a.payload.map(asyncWriteOperation))
+    .map(u => Success(u))
+    .recover {
+      case e => Failure(e)
     }
+    .collect {
+      case Failure(exception) => Failure(exception)
+      case Success(_) => Success({})
+    }
+
+  private def asyncWriteOperation(pr: PersistentRepr): Future[Unit] = toBytes(pr) match {
+    case Success(serialized) => Future {
+      getStoreFor(pr.persistenceId).insert(Journal.toMapRDBRow(pr.sequenceNr, serialized, pr.deleted))
+    }
+
+    case Failure(_) => Future.failed(new scala.RuntimeException("writeMessages: failed to write PersistentRepr to MapR-DB"))
   }
 
   /**
@@ -73,13 +65,13 @@ class MapRDBAsyncWriteJournal extends AsyncWriteJournal with ActorLogging with B
   override def asyncDeleteMessagesTo(persistenceId: String, toSequenceNr: Long): Future[Unit] = Future {
     val condition = connection
       .newCondition()
-      .is("_id", QueryCondition.Op.LESS_OR_EQUAL, toSequenceNr)
+      .is(MAPR_ENTITY_ID, QueryCondition.Op.LESS_OR_EQUAL, toSequenceNr)
       .build()
 
     val query = connection
       .newQuery()
       .where(condition)
-      .select("_id")
+      .select(MAPR_ENTITY_ID)
       .build()
 
     import scala.collection.JavaConverters._
@@ -88,19 +80,15 @@ class MapRDBAsyncWriteJournal extends AsyncWriteJournal with ActorLogging with B
 
     val messagesToDelete = store.find(query).asScala
 
-    messagesToDelete.foreach { document => store.update(document.getId, connection.newMutation().set("deleted", true)) }
+    messagesToDelete.foreach { document => store.update(document.getId, connection.newMutation().set(MAPR_DELETED_MARK, true)) }
   }
 
   override def asyncReplayMessages(persistenceId: String, fromSequenceNr: Long, toSequenceNr: Long, max: Long)(recoveryCallback: PersistentRepr => Unit): Future[Unit] = Future {
-
-    println(s"from: $fromSequenceNr")
-    println(s"to: $toSequenceNr")
-
     val condition = connection
       .newCondition()
       .and()
-      .is("_id", QueryCondition.Op.GREATER_OR_EQUAL, fromSequenceNr.toString)
-      .is("_id", QueryCondition.Op.LESS_OR_EQUAL, toSequenceNr.toString)
+      .is(MAPR_ENTITY_ID, QueryCondition.Op.GREATER_OR_EQUAL, fromSequenceNr.toString)
+      .is(MAPR_ENTITY_ID, QueryCondition.Op.LESS_OR_EQUAL, toSequenceNr.toString)
       .close()
       .build()
 
@@ -114,10 +102,8 @@ class MapRDBAsyncWriteJournal extends AsyncWriteJournal with ActorLogging with B
 
     val store = getStoreFor(persistenceId)
 
-    val messagesToReplay = store.find(query).asScala
-
-    messagesToReplay.foreach { doc =>
-      fromBytes[PersistentRepr](doc.getBinary("persistentRepr").array()) match {
+    store.find(query).asScala.foreach { doc =>
+      fromBytes[PersistentRepr](Journal.getBinaryRepresentationFrom(doc)) match {
         case Success(pr) => recoveryCallback(pr)
         case Failure(_) => Future.failed(throw new RuntimeException("asyncReplayMessages: Failed to deserialize PersistentRepr"))
       }
@@ -127,14 +113,14 @@ class MapRDBAsyncWriteJournal extends AsyncWriteJournal with ActorLogging with B
   override def asyncReadHighestSequenceNr(persistenceId: String, fromSequenceNr: Long): Future[Long] = Future {
     val condition = connection
       .newCondition()
-      .is("_id", QueryCondition.Op.GREATER_OR_EQUAL, fromSequenceNr.toString)
+      .is(MAPR_ENTITY_ID, QueryCondition.Op.GREATER_OR_EQUAL, fromSequenceNr.toString)
       .build()
 
     val query = connection
       .newQuery()
       .where(condition)
-      .select("_id")
-      .orderBy("_id", SortOrder.DESC)
+      .select(MAPR_ENTITY_ID)
+      .orderBy(MAPR_ENTITY_ID, SortOrder.DESC)
       .limit(1)
       .build()
 
@@ -142,14 +128,22 @@ class MapRDBAsyncWriteJournal extends AsyncWriteJournal with ActorLogging with B
 
     val store = getStoreFor(persistenceId)
 
-    val lowest: Long = store.find(query)
+    store.find(query)
       .asScala
       .headOption
-      .map(_.getString("_id").toLong)
+      .map(_.getString(MAPR_ENTITY_ID).toLong)
       .getOrElse(0)
-
-    println(s"HIGHEST: $lowest")
-
-    lowest
   }
+}
+
+object MapRDBAsyncWriteJournal {
+  lazy val PATH_CONFIGURATION_KEY = "akka-persistence-maprdb.path"
+
+  lazy val MAPR_CONFIGURATION_STRING = "ojai:mapr:"
+
+  lazy val MAPR_ENTITY_ID = "_id"
+
+  lazy val MAPR_DELETED_MARK = "deleted"
+
+  lazy val MAPR_BINARY_MARK = "persistentRepr"
 }

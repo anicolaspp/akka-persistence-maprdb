@@ -1,5 +1,6 @@
 package com.github.anicolaspp.akka.persistence
 
+import org.ojai.Document
 import org.ojai.store.Connection
 
 /**
@@ -7,12 +8,16 @@ import org.ojai.store.Connection
  * JSON in turn is serialized to ByteString so it can be stored in Redis with Rediscala
  */
 
+import MapRDBAsyncWriteJournal._
 
 object Journal {
-  def apply(sequenceNr: Long, persistentRepr: Array[Byte], deleted: Boolean)(implicit connection: Connection) =
+  def toMapRDBRow(sequenceNr: Long, persistentRepr: Array[Byte], deleted: Boolean)(implicit connection: Connection) =
     connection
       .newDocument()
       .setId(sequenceNr.toString)
-      .set("persistentRepr", persistentRepr)
-      .set("deleted", deleted)
+      .set(MAPR_BINARY_MARK, persistentRepr)
+      .set(MAPR_DELETED_MARK, deleted)
+
+  def getBinaryRepresentationFrom(document: Document): Array[Byte] =
+    document.getBinary(MAPR_BINARY_MARK).array()
 }
