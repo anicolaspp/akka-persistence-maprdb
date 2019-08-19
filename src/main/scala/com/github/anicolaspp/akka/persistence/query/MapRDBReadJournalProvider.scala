@@ -13,6 +13,6 @@ class MapRDBReadJournalProvider(system: ExtendedActorSystem, config: Config) ext
 }
 
 object MapRDBReadJournalProvider {
-  lazy val Identifier = "akka-persistence-maprdb.read-journal"
+//  lazy val Identifier = "akka-persistence-maprdb.read-journal"
 }
 

@@ -1,7 +1,12 @@
 package com.github.anicolaspp.akka.persistence
 
 import akka.actor.{ActorSystem, Props}
+import akka.persistence.query.PersistenceQuery
 import akka.persistence.{PersistentActor, SaveSnapshotFailure, SaveSnapshotSuccess, SnapshotOffer}
+import akka.stream.ActorMaterializer
+import com.github.anicolaspp.akka.persistence.query.MapRDBScalaReadJournal
+
+import scala.concurrent.Await
 
 object SnapshotExample extends App {
   final case class ExampleState(received: List[String] = Nil) {
@@ -47,4 +52,18 @@ object SnapshotExample extends App {
 
   Thread.sleep(1000*60*60)
   system.terminate()
+}
+
+object QueryExample extends App {
+
+  implicit val system = ActorSystem("example")
+
+  implicit val mat = ActorMaterializer()
+
+  val readJournal =
+    PersistenceQuery(system).readJournalFor[MapRDBScalaReadJournal]("akka.persistence.query.journal")
+
+  val done = readJournal.currentPersistenceIds().runForeach(println)
+
+  Await.result(done, scala.concurrent.duration.Duration.Inf)
 }

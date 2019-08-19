@@ -46,7 +46,9 @@ class CurrentPersistenceIdsSource(store: DocumentStore)(implicit connection: Con
     private def tryQuery(store: DocumentStore) = Try {
       import scala.collection.JavaConverters._
 
-      store.find().asScala.map(_.getIdString).toSeq
+      val result = store.find().asScala.map(_.getIdString).toSeq
+
+      result
     }
 
     private def deliver(): Unit = {
