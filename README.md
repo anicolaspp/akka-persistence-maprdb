@@ -135,6 +135,6 @@ the test. One can run the test locally against a configured MapR Cluster
 
 ```
 
-### Query Site
+### Query Side
 
 The Query Side is optional, hence not included in first version. An implementation of the Query (Read) Side is under development at the moment.
