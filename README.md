@@ -4,6 +4,31 @@
 
 This is a plugin for Akka Persistence that uses MapR-DB as backend. It implements a Journal store for saving the corresponding events for persistence entities and a Snapshot store.
 
+- [Linking](https://github.com/anicolaspp/akka-persistence-maprdb#linking)
+- [Plugin Activation](https://github.com/anicolaspp/akka-persistence-maprdb#activation)
+- [MapR-DB Configuration](https://github.com/anicolaspp/akka-persistence-maprdb#mapr-db-configuration)
+- [MapR Client](https://github.com/anicolaspp/akka-persistence-maprdb#mapr-client)
+- [How is data stored in MapR-DB](https://github.com/anicolaspp/akka-persistence-maprdb#how-is-data-storey-in-mapr-db)
+- [Journal Tests](https://github.com/anicolaspp/akka-persistence-maprdb#journal-tests)
+  - [Test Output](https://github.com/anicolaspp/akka-persistence-maprdb#tests-output)
+- [Persistence Query Side](https://github.com/anicolaspp/akka-persistence-maprdb#query-side)
+
+
+### Linking
+
+Releases are pushed to Maven Central.
+
+```xml
+<dependency>
+  <groupId>com.github.anicolaspp</groupId>
+  <artifactId>akka-persistence-maprdb_2.12</artifactId>
+  <version>1.0.1</version>
+</dependency>
+```
+
+```scala
+libraryDependencies += "com.github.anicolaspp" % "akka-persistence-maprdb_2.12" % "1.0.1"
+```
 
 ### Activation
 
@@ -109,3 +134,7 @@ the test. One can run the test locally against a configured MapR Cluster
 [success] Total time: 63 s, completed Aug 19, 2019 2:02:01 AM
 
 ```
+
+### Query Side
+
+The Query Side is optional, hence not included in first version. An implementation of the Query (Read) Side is under development at the moment.
