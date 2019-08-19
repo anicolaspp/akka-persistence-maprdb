@@ -9,3 +9,7 @@ case object Journal extends StoreType {
 case object Snapshot extends StoreType {
   override def toString: String = "snapshot"
 }
+
+case object PersistenceIdStore extends StoreType {
+  override def toString: String = "ids"
+}
