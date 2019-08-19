@@ -29,7 +29,7 @@ maprdb {
 }
 ```
 
-For each persistence entity to MapR-DB tables will be created. For example, if we have the persistence entity `user` then two tables are automatically created.
+For each persistence entity a MapR-DB tables will be created. For example, if we have the persistence entity `user` then two tables are automatically created.
 
 ```
 /user/mapr/tables/akka/user.journal
