@@ -1,6 +1,6 @@
 import ReleaseTransformations._
 
-name := "akka-persistent-maprdb"
+name := "akka-persistence-maprdb"
 
 scalaVersion := "2.12.8"
 
@@ -11,9 +11,9 @@ val ScalaTestVersion = "3.0.8"
 
 lazy val akkaPersistenceMapRDB = project.in(file("."))
   .settings(
-    homepage := Some(url("https://github.com/anicolaspp/akka-persistent-maprdb")),
+    homepage := Some(url("https://github.com/anicolaspp/akka-persistence-maprdb")),
 
-    scmInfo := Some(ScmInfo(url("https://github.com/anicolaspp/akka-persistent-maprdb"), "git@github.com:anicolaspp/akka-persistent-maprdb.git")),
+    scmInfo := Some(ScmInfo(url("https://github.com/anicolaspp/akka-persistence-maprdb"), "git@github.com:anicolaspp/akka-persistence-maprdb.git")),
 
     pomExtra := <developers>
       <developer>
