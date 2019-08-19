@@ -54,6 +54,8 @@ lazy val akkaPersistenceMapRDB = project.in(file("."))
       commitNextVersion, // : ReleaseStep
       pushChanges // : ReleaseStep, also checks that an upstream branch is properly configured
     ),
+    
+    resolvers += "MapR Releases" at "http://repository.mapr.com/maven/",
 
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
