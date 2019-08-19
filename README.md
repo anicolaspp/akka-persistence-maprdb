@@ -51,9 +51,9 @@ As mentioned above, each `.journal` table contains the events for the correspond
 
 ```json
 {
-  "_id": {"$binary": <sequenceNr in binary format>},
-  "persistentRepr": {"$binary": <persistentRepr in binary format>},
-  "deleted": {"$boolean": <true or false>}
+  "_id": {"$binary": sequenceNr in binary format},
+  "persistentRepr": {"$binary": persistentRepr in binary format},
+  "deleted": {"$boolean": true or false}
 }
 ```
 
@@ -65,10 +65,10 @@ Each `.snapshot` table represents the snapshots taken for an especific persisten
 {
   "_id": "persistenceId_sequenceNr_timestamp", // this is String sorted ASC by default
   "meta": {
-    "persistenceId": {"$long": <persistenceId>},
-    "sequenceNr": {"$long": <sequenceNr>},
-    "timestamp": <timestamp> 
+    "persistenceId": {"$long": persistenceId},
+    "sequenceNr": {"$long": sequenceNr},
+    "timestamp": timestamp 
   },
-  "snapshot": {"$binary": <binary representation of the Snapshot class>}
+  "snapshot": {"$binary": binary representation of the Snapshot class}
 }
 ```
