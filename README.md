@@ -11,6 +11,7 @@ This is a plugin for Akka Persistence that uses MapR-DB as backend. It implement
 - [How is data stored in MapR-DB](https://github.com/anicolaspp/akka-persistence-maprdb#how-is-data-storey-in-mapr-db)
 - [Journal Tests](https://github.com/anicolaspp/akka-persistence-maprdb#journal-tests)
   - [Test Output](https://github.com/anicolaspp/akka-persistence-maprdb#tests-output)
+- [Persistence Query Side](https://github.com/anicolaspp/akka-persistence-maprdb#query-side)
 
 
 ### Linking
@@ -133,3 +134,7 @@ the test. One can run the test locally against a configured MapR Cluster
 [success] Total time: 63 s, completed Aug 19, 2019 2:02:01 AM
 
 ```
+
+### Query Site
+
+The Query Side is optional, hence not included in first version. An implementation of the Query (Read) Side is under development at the moment.
