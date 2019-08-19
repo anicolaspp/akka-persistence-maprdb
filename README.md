@@ -4,6 +4,24 @@
 
 This is a plugin for Akka Persistence that uses MapR-DB as backend. It implements a Journal store for saving the corresponding events for persistence entities and a Snapshot store.
 
+- [Linking](https://github.com/anicolaspp/akka-persistence-maprdb/edit/master/README.md#linking)
+
+
+### Linking
+
+Releases are pushed to Maven Central.
+
+```xml
+<dependency>
+  <groupId>com.github.anicolaspp</groupId>
+  <artifactId>akka-persistence-maprdb_2.12</artifactId>
+  <version>1.0.1</version>
+</dependency>
+```
+
+```scala
+libraryDependencies += "com.github.anicolaspp" % "akka-persistence-maprdb_2.12" % "1.0.1"
+```
 
 ### Activation
 
