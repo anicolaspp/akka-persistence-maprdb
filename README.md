@@ -49,7 +49,7 @@ These two tables are created automatically the first time the plugin is activate
 
 As mentioned above, each `.journal` table contains the events for the corresponding persistent entity and the following structure is used. 
 
-```json
+```
 {
   "_id": {"$binary": sequenceNr in binary format},
   "persistentRepr": {"$binary": persistentRepr in binary format},
@@ -61,7 +61,7 @@ Each row is an even and they are sorted by MapR-DB based on the `_id` in `ASC` o
 
 Each `.snapshot` table represents the snapshots taken for an especific persistent entity and the following structure is used. 
 
-```json
+```
 {
   "_id": "persistenceId_sequenceNr_timestamp", // this is String sorted ASC by default
   "meta": {
