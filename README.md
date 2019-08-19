@@ -7,6 +7,10 @@ This is a plugin for Akka Persistence that uses MapR-DB as backend. It implement
 - [Linking](https://github.com/anicolaspp/akka-persistence-maprdb#linking)
 - [Plugin Activation](https://github.com/anicolaspp/akka-persistence-maprdb#activation)
 - [MapR-DB Configuration](https://github.com/anicolaspp/akka-persistence-maprdb#mapr-db-configuration)
+- [MapR Client](https://github.com/anicolaspp/akka-persistence-maprdb#mapr-client)
+- [How is data stored in MapR-DB](https://github.com/anicolaspp/akka-persistence-maprdb#how-is-data-storey-in-mapr-db)
+- [Journal Tests](https://github.com/anicolaspp/akka-persistence-maprdb#journal-tests)
+  - [Test Output](https://github.com/anicolaspp/akka-persistence-maprdb#tests-output)
 
 
 ### Linking
