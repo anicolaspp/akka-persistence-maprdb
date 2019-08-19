@@ -46,7 +46,7 @@ lazy val akkaPersistenceMapRDB = project.in(file("."))
       inquireVersions, // : ReleaseStep
       runClean, // : ReleaseStep
       runTest, // : ReleaseStep
-      setReleaseVersion,                      // : ReleaseStep
+      setReleaseVersion, // : ReleaseStep
       commitReleaseVersion, // : ReleaseStep, performs the initial git checks
       tagRelease, // : ReleaseStep
       publishArtifacts, // : ReleaseStep, checks whether `publishTo` is properly set up
@@ -54,7 +54,7 @@ lazy val akkaPersistenceMapRDB = project.in(file("."))
       commitNextVersion, // : ReleaseStep
       pushChanges // : ReleaseStep, also checks that an upstream branch is properly configured
     ),
-    
+
     resolvers += "MapR Releases" at "http://repository.mapr.com/maven/",
 
     libraryDependencies ++= Seq(
@@ -75,8 +75,13 @@ lazy val akkaPersistenceMapRDB = project.in(file("."))
       "org.ojai" % "ojai-scala" % "3.0-mapr-1808",
 
       "com.mapr.db" % "maprdb" % "6.1.0-mapr",
-      "xerces" % "xercesImpl" % "2.11.0"
+      "xerces" % "xercesImpl" % "2.11.0",
+
+      "com.github.anicolaspp" % "ojai-testing_2.12" % "1.0.8"
     )
+      .map(_.exclude("org.slf4j", "slf4j-log4j12")),
+
+    parallelExecution in Test := false
   )
 
 

@@ -72,3 +72,40 @@ Each `.snapshot` table represents the snapshots taken for an especific persisten
   "snapshot": {"$binary": binary representation of the Snapshot class}
 }
 ```
+
+## Journal Tests 
+
+All tests for the journal passed. However, since we don't have a MapR Cluster in Travis we are going to ignore the 
+the test. One can run the test locally against a configured MapR Cluster
+
+### Tests Output
+
+```
+[info] MyJournalSpec:
+[info] A journal
+[info] - must replay all messages
+[info] - must replay messages using a lower sequence number bound
+[info] - must replay messages using an upper sequence number bound
+[info] - must replay messages using a count limit
+[info] - must replay messages using a lower and upper sequence number bound
+[info] - must replay messages using a lower and upper sequence number bound and a count limit
+[info] - must replay a single if lower sequence number bound equals upper sequence number bound
+[info] - must replay a single message if count limit equals 1
+[info] - must not replay messages if count limit equals 0
+[info] - must not replay messages if lower  sequence number bound is greater than upper sequence number bound
+[info] - must not replay messages if the persistent actor has not yet written messages
+[info] - must not replay permanently deleted messages (range deletion)
+[info] - must not reset highestSequenceNr after message deletion
+[info] - must not reset highestSequenceNr after journal cleanup
+[info] A Journal optionally
+[info] + CapabilityFlag `supportsRejectingNonSerializableObjects` was turned `off`. To enable the related tests override it with `CapabilityFlag.on` (or `true` in Scala). 
+[info] + CapabilityFlag `supportsSerialization` was turned `on`.  
+[info] - may serialize events
+[info] Run completed in 52 seconds, 904 milliseconds.
+[info] Total number of tests run: 15
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 15, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 63 s, completed Aug 19, 2019 2:02:01 AM
+
+```

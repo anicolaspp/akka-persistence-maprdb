@@ -2,12 +2,25 @@ package com.github.anicolaspp.akka.persistence
 
 import java.nio.ByteBuffer
 
+import com.typesafe.config.Config
+import org.ojai.store.DriverManager
+
 object MapRDB {
   implicit class LongEx(value: Long) {
     def toBinaryId(): ByteBuffer = ByteBuffer.wrap(BigInt(value).toByteArray)
   }
 
-  lazy val MAPR_CONFIGURATION_STRING = "ojai:mapr:"
+  def maprdbConnectionString(config: Config): String = {
+    val url = config.getString("maprdb.driver.url")
+
+    if (url == "ojai:anicolaspp:mem") {
+      DriverManager.registerDriver(com.mapr.ojai.store.impl.InMemoryDriver)
+    }
+
+    url
+  }
+
+//  lazy val MAPR_CONFIGURATION_STRING = "ojai:mapr:"
 
   lazy val MAPR_ENTITY_ID = "_id"
 

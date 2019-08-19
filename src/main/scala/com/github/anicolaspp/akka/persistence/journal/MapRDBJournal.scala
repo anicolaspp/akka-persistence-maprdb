@@ -3,9 +3,10 @@ package com.github.anicolaspp.akka.persistence.journal
 import akka.actor.{ActorLogging, ActorSystem}
 import akka.persistence._
 import akka.persistence.journal.AsyncWriteJournal
-import com.github.anicolaspp.akka.persistence.ByteArraySerializer
+import com.github.anicolaspp.akka.persistence.{ByteArraySerializer, MapRDBConnectionProvider}
 import com.github.anicolaspp.akka.persistence.MapRDB._
 import com.github.anicolaspp.akka.persistence.ojai.StorePool
+import com.typesafe.config.Config
 import org.ojai.store._
 
 import scala.collection.immutable
@@ -14,17 +15,18 @@ import scala.util.{Failure, Success, Try}
 
 class MapRDBJournal extends AsyncWriteJournal
   with ActorLogging
-  with ByteArraySerializer {
+  with ByteArraySerializer
+  with MapRDBConnectionProvider {
 
   implicit lazy val actorSystem: ActorSystem = context.system
 
-  implicit val connection: Connection = DriverManager.getConnection(MAPR_CONFIGURATION_STRING)
+  //  implicit val connection: Connection = DriverManager.getConnection(maprdbConnectionString(config))
 
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
 
-  private val config = actorSystem.settings.config
+  def actorSystemConfiguration: Config = actorSystem.settings.config
 
-  private val journalPath = config.getString(PATH_CONFIGURATION_KEY)
+  private val journalPath = actorSystemConfiguration.getString(PATH_CONFIGURATION_KEY)
 
   private val storesPool = StorePool.journalFor(journalPath)
 
@@ -58,6 +60,7 @@ class MapRDBJournal extends AsyncWriteJournal
       .and()
       .is(MAPR_ENTITY_ID, QueryCondition.Op.GREATER_OR_EQUAL, fromSequenceNr.toBinaryId())
       .is(MAPR_ENTITY_ID, QueryCondition.Op.LESS_OR_EQUAL, toSequenceNr.toBinaryId())
+      .is(MAPR_DELETED_MARK, QueryCondition.Op.EQUAL, false)
       .close()
       .build()
 
@@ -78,7 +81,6 @@ class MapRDBJournal extends AsyncWriteJournal
       }
     }
   }
-
 
   override def asyncReadHighestSequenceNr(persistenceId: String, fromSequenceNr: Long): Future[Long] = Future {
     val condition = connection
@@ -105,16 +107,12 @@ class MapRDBJournal extends AsyncWriteJournal
     highest
   }
 
-  private def asyncWriteBatch(a: AtomicWrite): Future[Try[Unit]] = Future
-    .sequence(a.payload.map(asyncWriteOperation))
-    .map(u => Success(u))
-    .recover {
-      case e => Failure(e)
-    }
-    .collect {
-      case Failure(exception) => Failure(exception)
-      case Success(_) => Success({})
-    }
+  private def asyncWriteBatch(a: AtomicWrite): Future[Try[Unit]] =
+    Future.sequence(a.payload.map(asyncWriteOperation))
+      .map[Try[Unit]](u => Success(u))
+      .recover {
+        case ex => Failure(ex)
+      }
 
   private def asyncWriteOperation(pr: PersistentRepr): Future[Unit] = toBytes(pr) match {
     case Success(serialized) => Future {
@@ -124,3 +122,4 @@ class MapRDBJournal extends AsyncWriteJournal
     case Failure(_) => Future.failed(new scala.RuntimeException("writeMessages: failed to write PersistentRepr to MapR-DB"))
   }
 }
+

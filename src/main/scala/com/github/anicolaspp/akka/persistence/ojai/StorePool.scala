@@ -18,7 +18,7 @@ object StorePool {
   private case class MapRDBStorePool(path: String, storeType: StoreType)(implicit connection: Connection) extends StorePool {
     private var stores = Map.empty[String, DocumentStore]
 
-    override def getStoreFor(persistentId: String): DocumentStore = {
+    override def getStoreFor(persistentId: String): DocumentStore = synchronized {
       val storePath = s"$path/$persistentId.${storeType.toString}"
 
       if (stores.contains(storePath)) {

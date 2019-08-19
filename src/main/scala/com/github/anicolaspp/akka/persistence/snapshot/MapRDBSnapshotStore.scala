@@ -3,25 +3,26 @@ package com.github.anicolaspp.akka.persistence.snapshot
 import akka.actor.{ActorLogging, ActorSystem}
 import akka.persistence.snapshot.SnapshotStore
 import akka.persistence.{SelectedSnapshot, SnapshotMetadata, SnapshotSelectionCriteria}
-import com.github.anicolaspp.akka.persistence.ByteArraySerializer
-import com.github.anicolaspp.akka.persistence.MapRDB.{MAPR_CONFIGURATION_STRING, _}
+import com.github.anicolaspp.akka.persistence.{ByteArraySerializer, MapRDBConnectionProvider}
+import com.github.anicolaspp.akka.persistence.MapRDB._
 import com.github.anicolaspp.akka.persistence.ojai.StorePool
-import org.ojai.store.{Connection, DriverManager, QueryCondition, SortOrder}
-import Snapshot._
+import com.github.anicolaspp.akka.persistence.snapshot.Snapshot._
+import com.typesafe.config.Config
+import org.ojai.store.{QueryCondition, SortOrder}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class MapRDBSnapshotStore extends SnapshotStore
   with ActorLogging
-  with ByteArraySerializer {
+  with ByteArraySerializer with MapRDBConnectionProvider {
 
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
 
-  implicit val connection: Connection = DriverManager.getConnection(MAPR_CONFIGURATION_STRING)
-  private val config = actorSystem.settings.config
-  private val snapshotPath = config.getString(PATH_CONFIGURATION_KEY)
+  def actorSystemConfiguration: Config = actorSystem.settings.config
 
-  private val storePool = StorePool.snapshotStoreFor(snapshotPath)
+  private lazy val snapshotPath = actorSystemConfiguration.getString(PATH_CONFIGURATION_KEY)
+
+  private lazy val storePool = StorePool.snapshotStoreFor(snapshotPath)
 
   override implicit lazy val actorSystem: ActorSystem = context.system
 
