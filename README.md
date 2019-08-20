@@ -118,6 +118,80 @@ Each `.snapshot` table represents the snapshots taken for an especific persisten
 }
 ```
 
+## Inspecting your Journals and Snapshots
+
+At any moment in time, we could use of the many avaible tools to inspect the corresponding structures created by this library. 
+
+### Using MapR DBShell
+
+```sh
+mapr dbshell
+
+====================================================
+*                  MapR-DB Shell                   *
+* NOTE: This is a shell for JSON table operations. *
+====================================================
+Version: 6.1.0-mapr
+
+MapR-DB Shell
+
+maprdb mapr:> ls /user/mapr/tables/akka/
+Found 17 items
+tr--------   - mapr 5000          3 2019-08-19 23:46 /user/mapr/tables/akka/ids
+tr--------   - mapr 5000          3 2019-08-19 23:41 /user/mapr/tables/akka/non-existing-pid.journal
+tr--------   - mapr 5000          3 2019-08-19 23:43 /user/mapr/tables/akka/p-1.journal
+tr--------   - mapr 5000          3 2019-08-19 23:46 /user/mapr/tables/akka/p-10.journal
+tr--------   - mapr 5000          3 2019-08-19 23:41 /user/mapr/tables/akka/p-11.journal
+tr--------   - mapr 5000          3 2019-08-19 23:41 /user/mapr/tables/akka/p-12.journal
+tr--------   - mapr 5000          3 2019-08-19 23:41 /user/mapr/tables/akka/p-13.journal
+tr--------   - mapr 5000          3 2019-08-19 23:46 /user/mapr/tables/akka/p-14.journal
+tr--------   - mapr 5000          3 2019-08-19 23:41 /user/mapr/tables/akka/p-15.journal
+tr--------   - mapr 5000          3 2019-08-19 23:41 /user/mapr/tables/akka/p-2.journal
+tr--------   - mapr 5000          3 2019-08-19 23:37 /user/mapr/tables/akka/p-3.journal
+tr--------   - mapr 5000          3 2019-08-19 23:41 /user/mapr/tables/akka/p-4.journal
+tr--------   - mapr 5000          3 2019-08-19 23:43 /user/mapr/tables/akka/p-5.journal
+tr--------   - mapr 5000          3 2019-08-19 23:46 /user/mapr/tables/akka/p-6.journal
+tr--------   - mapr 5000          3 2019-08-19 23:41 /user/mapr/tables/akka/p-7.journal
+tr--------   - mapr 5000          3 2019-08-19 23:37 /user/mapr/tables/akka/p-8.journal
+```
+The previous example shows the `journal` tables and `ids` tables. 
+
+```sh
+maprdb mapr:> find /user/mapr/tables/akka/ids
+
+{"_id":"non-existing-pid","path":"/user/mapr/tables/akka/non-existing-pid.journal"}
+{"_id":"p-1","path":"/user/mapr/tables/akka/p-1.journal"}
+{"_id":"p-10","path":"/user/mapr/tables/akka/p-10.journal"}
+{"_id":"p-11","path":"/user/mapr/tables/akka/p-11.journal"}
+{"_id":"p-12","path":"/user/mapr/tables/akka/p-12.journal"}
+{"_id":"p-13","path":"/user/mapr/tables/akka/p-13.journal"}
+{"_id":"p-14","path":"/user/mapr/tables/akka/p-14.journal"}
+{"_id":"p-15","path":"/user/mapr/tables/akka/p-15.journal"}
+{"_id":"p-2","path":"/user/mapr/tables/akka/p-2.journal"}
+{"_id":"p-3","path":"/user/mapr/tables/akka/p-3.journal"}
+{"_id":"p-4","path":"/user/mapr/tables/akka/p-4.journal"}
+{"_id":"p-5","path":"/user/mapr/tables/akka/p-5.journal"}
+{"_id":"p-6","path":"/user/mapr/tables/akka/p-6.journal"}
+{"_id":"p-7","path":"/user/mapr/tables/akka/p-7.journal"}
+{"_id":"p-8","path":"/user/mapr/tables/akka/p-8.journal"}
+{"_id":"p-9","path":"/user/mapr/tables/akka/p-9.journal"}
+```
+Notice that the `ids` table has each `persistence entity id` along with the path where it lives.
+
+Now let's inspect one of the the `journal`s.
+
+```sh
+maprdb mapr:> find /user/mapr/tables/akka/p-1.journal
+
+{"_id":{"$binary":"AQ=="},"deleted":false,"persistentRepr":{"$binary":"Cg4IARIKrO0ABXQAA2EtMRABGgNwLTFqJDdjYmUxNmQ4LWY1ZTktNGEyYy04ZjZiLWFlMWNmNWQxNzZkZg=="}}
+{"_id":{"$binary":"Ag=="},"deleted":false,"persistentRepr":{"$binary":"Cg4IARIKrO0ABXQAA2EtMhACGgNwLTFqJDdjYmUxNmQ4LWY1ZTktNGEyYy04ZjZiLWFlMWNmNWQxNzZkZg=="}}
+{"_id":{"$binary":"Aw=="},"deleted":false,"persistentRepr":{"$binary":"Cg4IARIKrO0ABXQAA2EtMxADGgNwLTFqJDdjYmUxNmQ4LWY1ZTktNGEyYy04ZjZiLWFlMWNmNWQxNzZkZg=="}}
+{"_id":{"$binary":"BA=="},"deleted":false,"persistentRepr":{"$binary":"Cg4IARIKrO0ABXQAA2EtNBAEGgNwLTFqJDdjYmUxNmQ4LWY1ZTktNGEyYy04ZjZiLWFlMWNmNWQxNzZkZg=="}}
+{"_id":{"$binary":"BQ=="},"deleted":false,"persistentRepr":{"$binary":"Cg4IARIKrO0ABXQAA2EtNRAFGgNwLTFqJDdjYmUxNmQ4LWY1ZTktNGEyYy04ZjZiLWFlMWNmNWQxNzZkZg=="}}
+5 document(s) found.
+```
+The previous example shows the content of `p-1.journal`. Notice that the structure matches to the journal's structure we explained before.
+
 ## Journal Tests 
 
 All tests for the journal passed. However, since we don't have a MapR Cluster in Travis we are going to ignore the 
