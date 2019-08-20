@@ -236,7 +236,8 @@ The current version supports Persistence Read Side. The following two queries ha
 
 - `currentPersistenceIds()` gives back the persistence ids in a bounded stream that is closed after completion
 - `persistenceIds()` gives back the persistence ids in an unbounded stream that keeps open. New persistence ids will be pushed into this stream.
-- `currentEventsByPersistenceId(...)` queries events of especified `persistence entity id`. 
+- `currentEventsByPersistenceId(...)` queries events of the especified `persistence entity id`. 
+- `eventsByPersistenceId(...)` is the stream of events of the especified `persistence entity id`. New events will be pushed into this stream as it keeps live. 
 
 ```scala
 object QueryExample extends App {
@@ -250,7 +251,8 @@ object QueryExample extends App {
     PersistenceQuery(system).readJournalFor[MapRDBScalaReadJournal]("akka.persistence.query.journal")
 
   val events = readJournal.currentEventsByPersistenceId("p-1", 3, Long.MaxValue)
-  Await.result(events.runForeach(println), scala.concurrent.duration.Duration.Inf)
+  
+  val liveEvents = readJournal.eventsByPersistenceId("p-1", 3, Long.MaxValue)
 
   val boundedStream = readJournal.currentPersistenceIds().runForeach(println)
 
@@ -258,7 +260,7 @@ object QueryExample extends App {
 
   Await.result(boundedStream, scala.concurrent.duration.Duration.Inf)
   Await.result(unboundedStream, scala.concurrent.duration.Duration.Inf)
+  Await.result(events.runForeach(println), scala.concurrent.duration.Duration.Inf)
+  Await.result(liveEvents.runForeach(println), scala.concurrent.duration.Duration.Inf)
 }
 ```
-
-More queries are coming soon.
