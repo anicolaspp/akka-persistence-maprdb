@@ -1,6 +1,6 @@
 # akka-persistence-maprdb
 
-[![Build Status](https://travis-ci.com/anicolaspp/akka-persistence-maprdb.svg?branch=master)](https://travis-ci.com/anicolaspp/akka-persistence-maprdb)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.anicolaspp/akka-persistence-maprdb_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.anicolaspp/akka-persistence-maprdb_2.12) [![Build Status](https://travis-ci.com/anicolaspp/akka-persistence-maprdb.svg?branch=master)](https://travis-ci.com/anicolaspp/akka-persistence-maprdb)
 
 This is a plugin for Akka Persistence that uses MapR-DB as backend. It implements a Journal store for saving the corresponding events for persistence entities and a Snapshot store.
 
