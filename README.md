@@ -7,14 +7,16 @@ This is a plugin for Akka Persistence that uses MapR-DB as backend. It implement
 - [Linking](https://github.com/anicolaspp/akka-persistence-maprdb#linking)
 - [Plugin Activation](https://github.com/anicolaspp/akka-persistence-maprdb#activation)
 - [MapR-DB Configuration](https://github.com/anicolaspp/akka-persistence-maprdb#mapr-db-configuration)
+- [Persistence Entity Ids Table](https://github.com/anicolaspp/akka-persistence-maprdb#persistence-entity-ids-table)
 - [MapR Client](https://github.com/anicolaspp/akka-persistence-maprdb#mapr-client)
 - [How is data stored in MapR-DB](https://github.com/anicolaspp/akka-persistence-maprdb#how-is-data-storey-in-mapr-db)
+- [Inspecting your Journals and Snapshots](https://github.com/anicolaspp/akka-persistence-maprdb#inspecting-your-journals-and-snapshots)
 - [Journal Tests](https://github.com/anicolaspp/akka-persistence-maprdb#journal-tests)
   - [Test Output](https://github.com/anicolaspp/akka-persistence-maprdb#tests-output)
 - [Persistence Query Side](https://github.com/anicolaspp/akka-persistence-maprdb#query-side)
 
 
-### Linking
+## Linking
 
 Releases are pushed to Maven Central.
 
@@ -30,7 +32,7 @@ Releases are pushed to Maven Central.
 libraryDependencies += "com.github.anicolaspp" % "akka-persistence-maprdb_2.12" % "1.0.2"
 ```
 
-### Activation
+## Activation
 
 ```
 akka {
@@ -44,7 +46,7 @@ akka {
 }
 ```
 
-### MapR-DB Configuration
+## MapR-DB Configuration
 
 TWe need some settings to be set up for MapR-DB. 
 
@@ -74,9 +76,9 @@ For each persistence entity a MapR-DB tables will be created. For example, if we
 ```
 These two tables are created automatically the first time the plugin is activated, after that they will consecuentenly be used to read the initial state of the persistence entity when needed and to save new events and snapshots.
 
-### Persistence Entity Ids Table
+## Persistence Entity Ids Table
 
-one additional MapR-DB table is created along with your journals and snapshot. The table will have the following name:
+One additional MapR-DB table is created along with your journals and snapshot. The table will have the following name:
 
 ```
 /user/mapr/tables/akka/ids
@@ -84,11 +86,11 @@ one additional MapR-DB table is created along with your journals and snapshot. T
 
 Notice that the base path is what we indicated in the configuration. The table name is `ids`. This table is set of all `persistence entity ids` that is use in the query side. There are different ways to queries the `persistence entity ids`. One possible way is to optain a handler to the MapR distributed file system (MFS) and enumerate the tables there. However, having an extra table (`ids`) makes all very easy.
 
-### MapR Client
+## MapR Client
 
 `akka-persistence-maprdb` plugin uses [OJAI](https://mapr.com/docs/61/MapR-DB/JSON_DB/UsingJavaOJAI.html) and the MapR Client to communicate with the MapR Cluster. Make sure you have configured the MapR Client accordingly. In a secured cluster, make sure that the corresponding `mapr ticket` has been created so authentication happens correctly. 
 
-### How is data storey in MapR-DB?
+## How is data storey in MapR-DB?
 
 `akka-persistence-maprdb` plugin uses MapR-DB JSON to store the corresponding user defined events and persistence entity snapshots into MapR-DB. 
 
@@ -229,7 +231,7 @@ the test. One can run the test locally against a configured MapR Cluster
 
 ```
 
-### Query Side
+## Query Side
 
 The current version supports Persistence Read Side. The following two queries have been added. 
 
