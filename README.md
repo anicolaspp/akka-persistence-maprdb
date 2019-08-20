@@ -258,3 +258,4 @@ object QueryExample extends App {
 }
 ```
 
+More queries are comming soon.
