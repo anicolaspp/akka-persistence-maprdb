@@ -3,7 +3,7 @@ package test
 
 import akka.persistence.CapabilityFlag
 import akka.persistence.journal.JournalSpec
-import com.github.anicolaspp.akka.persistence.MapRDBConnectionProvider
+import com.github.anicolaspp.akka.persistence.ojai.MapRDBConnectionProvider
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.Ignore
 

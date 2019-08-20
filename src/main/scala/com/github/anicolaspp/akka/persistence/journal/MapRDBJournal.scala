@@ -3,9 +3,9 @@ package com.github.anicolaspp.akka.persistence.journal
 import akka.actor.{ActorLogging, ActorSystem}
 import akka.persistence._
 import akka.persistence.journal.AsyncWriteJournal
-import com.github.anicolaspp.akka.persistence.{ByteArraySerializer, MapRDBConnectionProvider}
+import com.github.anicolaspp.akka.persistence.ByteArraySerializer
 import com.github.anicolaspp.akka.persistence.MapRDB._
-import com.github.anicolaspp.akka.persistence.ojai.StorePool
+import com.github.anicolaspp.akka.persistence.ojai.{MapRDBConnectionProvider, StorePool}
 import com.typesafe.config.Config
 import org.ojai.store._
 

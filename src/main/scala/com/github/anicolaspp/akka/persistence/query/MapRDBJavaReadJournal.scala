@@ -6,7 +6,7 @@ import akka.persistence.query.EventEnvelope
 import akka.persistence.query.javadsl.ReadJournal
 import akka.persistence.query.javadsl.{CurrentEventsByPersistenceIdQuery, CurrentPersistenceIdsQuery, PersistenceIdsQuery}
 import akka.stream.javadsl.Source
-import com.github.anicolaspp.akka.persistence.MapRDBConnectionProvider
+import com.github.anicolaspp.akka.persistence.ojai.MapRDBConnectionProvider
 import com.typesafe.config.Config
 
 class MapRDBJavaReadJournal private[anicolaspp](system: ExtendedActorSystem) extends ReadJournal

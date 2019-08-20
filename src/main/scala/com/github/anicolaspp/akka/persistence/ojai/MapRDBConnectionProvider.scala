@@ -1,4 +1,4 @@
-package com.github.anicolaspp.akka.persistence
+package com.github.anicolaspp.akka.persistence.ojai
 
 import com.github.anicolaspp.akka.persistence.MapRDB.maprdbConnectionString
 import com.typesafe.config.Config

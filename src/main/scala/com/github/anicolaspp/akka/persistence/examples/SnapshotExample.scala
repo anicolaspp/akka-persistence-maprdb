@@ -1,12 +1,7 @@
-package com.github.anicolaspp.akka.persistence
+package com.github.anicolaspp.akka.persistence.examples
 
 import akka.actor.{ActorSystem, Props}
-import akka.persistence.query.PersistenceQuery
 import akka.persistence.{PersistentActor, SaveSnapshotFailure, SaveSnapshotSuccess, SnapshotOffer}
-import akka.stream.ActorMaterializer
-import com.github.anicolaspp.akka.persistence.query.MapRDBScalaReadJournal
-
-import scala.concurrent.Await
 
 object SnapshotExample extends App {
   final case class ExampleState(received: List[String] = Nil) {
@@ -35,8 +30,6 @@ object SnapshotExample extends App {
       case evt: String =>
         state = state.updated(evt)
     }
-
-//    override def journalPluginId: String = "akka-persistence-maprdb"
   }
 
   val system = ActorSystem("example")
@@ -54,20 +47,4 @@ object SnapshotExample extends App {
   system.terminate()
 }
 
-object QueryExample extends App {
 
-  implicit val system = ActorSystem("example")
-
-  implicit val mat = ActorMaterializer()
-
-
-  val readJournal =
-    PersistenceQuery(system).readJournalFor[MapRDBScalaReadJournal]("akka.persistence.query.journal")
-
-  val boundedStream = readJournal.currentPersistenceIds().runForeach(println)
-
-  val unboundedStream = readJournal.persistenceIds().runForeach(println)
-
-  Await.result(boundedStream, scala.concurrent.duration.Duration.Inf)
-  Await.result(unboundedStream, scala.concurrent.duration.Duration.Inf)
-}

@@ -9,10 +9,6 @@ trait StorePool extends IdsStore {
   def getStoreFor(persistentId: String): DocumentStore
 }
 
-trait IdsStore {
-  def getStore(): DocumentStore
-}
-
 object StorePool {
   def idsStore(path: String)(implicit connection: Connection): DocumentStore = SingleStore(idsStorePath(path)).getStore()
 
@@ -37,15 +33,18 @@ object StorePool {
 
         val store = initializeStoreInPathIfNeeded(storePath)
 
-        Future {
-          ids.getStore().insert(connection.newDocument().setId(persistentId).set("path", storePath))
-        }(scala.concurrent.ExecutionContext.global)
+        asyncAddPersistenceIdToIdsTable(persistentId, storePath)
 
         stores = stores + (storePath -> store)
 
         store
       }
     }
+
+    private def asyncAddPersistenceIdToIdsTable(persistentId: String, storePath: String) = Future {
+      ids.getStore()
+        .insert(connection.newDocument().setId(persistentId).set("path", storePath))
+    }(scala.concurrent.ExecutionContext.global)
 
     override def getStore(): DocumentStore = ids.getStore()
 
