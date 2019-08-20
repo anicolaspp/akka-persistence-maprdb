@@ -9,7 +9,7 @@ This is a plugin for Akka Persistence that uses MapR-DB as backend. It implement
 - [MapR-DB Configuration](https://github.com/anicolaspp/akka-persistence-maprdb#mapr-db-configuration)
 - [Persistence Entity Ids Table](https://github.com/anicolaspp/akka-persistence-maprdb#persistence-entity-ids-table)
 - [MapR Client](https://github.com/anicolaspp/akka-persistence-maprdb#mapr-client)
-- [How is data stored in MapR-DB](https://github.com/anicolaspp/akka-persistence-maprdb#how-is-data-storey-in-mapr-db)
+- [How is data is stored in MapR-DB](https://github.com/anicolaspp/akka-persistence-maprdb#how-is-data-is-stored-in-mapr-db)
 - [Inspecting your Journals and Snapshots](https://github.com/anicolaspp/akka-persistence-maprdb#inspecting-your-journals-and-snapshots)
 - [Journal Tests](https://github.com/anicolaspp/akka-persistence-maprdb#journal-tests)
   - [Test Output](https://github.com/anicolaspp/akka-persistence-maprdb#tests-output)
@@ -90,7 +90,7 @@ Notice that the base path is what we indicated in the configuration. The table n
 
 `akka-persistence-maprdb` plugin uses [OJAI](https://mapr.com/docs/61/MapR-DB/JSON_DB/UsingJavaOJAI.html) and the MapR Client to communicate with the MapR Cluster. Make sure you have configured the MapR Client accordingly. In a secured cluster, make sure that the corresponding `mapr ticket` has been created so authentication happens correctly. 
 
-## How is data storey in MapR-DB?
+## How is data is stored in MapR-DB?
 
 `akka-persistence-maprdb` plugin uses MapR-DB JSON to store the corresponding user defined events and persistence entity snapshots into MapR-DB. 
 
