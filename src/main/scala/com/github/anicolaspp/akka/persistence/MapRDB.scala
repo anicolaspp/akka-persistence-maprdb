@@ -34,6 +34,8 @@ object MapRDB {
 
   lazy val PATH_CONFIGURATION_KEY = "maprdb.path"
 
-  lazy val IDS_POLLING_INTERVAL = "maprdb.pollingIntervalms"
+  lazy val IDS_POLLING_INTERVAL = "maprdb.idPollingIntervalMs"
+
+  lazy val EVENTS_POLLING_INTERVAL = "maprdb.eventsPollingIntervalMs"
 }
 

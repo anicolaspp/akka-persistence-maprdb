@@ -1,19 +1,21 @@
-package com.github.anicolaspp.akka.persistence.query.sources
+package com.github.anicolaspp.akka.persistence.query.sources.subscriber
 
 import com.github.anicolaspp.akka.persistence.MapRDB
 import org.ojai.store.{Connection, DocumentStore}
 
 import scala.util.Try
 
-class PersistenceIdsSubscription(store: DocumentStore)(implicit connection: Connection) {
-  private var isRunning = true
+class PersistenceIdsSubscription(store: DocumentStore)(implicit connection: Connection) extends Subscription[Seq[String]] {
+  private var running = false
 
-  def subscribe(pollingIntervalMs: Long, fn: Seq[String] => Unit): Unit = {
+  override def subscribe(pollingIntervalMs: Long, fn: Seq[String] => Unit): Unit = {
     val subscriber = new Thread {
       setDaemon(true)
 
       override def run(): Unit = {
-        while (isRunning) {
+        running = true
+
+        while (running) {
           val result = tryQuery(store).getOrElse(Seq.empty)
 
           fn(result)
@@ -26,7 +28,7 @@ class PersistenceIdsSubscription(store: DocumentStore)(implicit connection: Conn
     subscriber.start()
   }
 
-  def unsubscribe(): Unit = isRunning = false
+  override def unsubscribe(): Unit = running = false
 
   private def tryQuery(store: DocumentStore) = Try {
     import scala.collection.JavaConverters._
@@ -35,6 +37,8 @@ class PersistenceIdsSubscription(store: DocumentStore)(implicit connection: Conn
 
     result
   }
+
+  override def isRunning: Boolean = running
 }
 
 object PersistenceIdsSubscription {

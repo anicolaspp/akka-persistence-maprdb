@@ -14,6 +14,7 @@ class MapRDBScalaReadJournal private[anicolaspp](system: ExtendedActorSystem) ex
   with CurrentPersistenceIdsQuery
   with PersistenceIdsQuery
   with CurrentEventsByPersistenceIdQuery
+  with EventsByPersistenceIdQuery
   with MapRDBConnectionProvider {
 
   /**
@@ -52,7 +53,31 @@ class MapRDBScalaReadJournal private[anicolaspp](system: ExtendedActorSystem) ex
       StorePool.journalFor(actorSystemConfiguration.getString(MapRDB.PATH_CONFIGURATION_KEY)).getStoreFor(persistenceId),
       system,
       fromSequenceNr,
-      toSequenceNr)
+      toSequenceNr,
+      isStreamingQuery = false)
+    )
+
+  /**
+   * Query events for a specific `PersistentActor` identified by `persistenceId`.
+   *
+   * You can retrieve a subset of all events by specifying `fromSequenceNr` and `toSequenceNr`
+   * or use `0L` and `Long.MaxValue` respectively to retrieve all events.
+   *
+   * The returned event stream should be ordered by sequence number.
+   *
+   * The stream is not completed when it reaches the end of the currently stored events,
+   * but it continues to push new events when new events are persisted.
+   * Corresponding query that is completed when it reaches the end of the currently
+   * stored events is provided by [[CurrentEventsByPersistenceIdQuery#currentEventsByPersistenceId]].
+   */
+  override def eventsByPersistenceId(persistenceId: String, fromSequenceNr: Long, toSequenceNr: Long): Source[EventEnvelope, NotUsed] =
+    Source.fromGraph(new EventsByPersistenceIdSource(
+      StorePool.journalFor(actorSystemConfiguration.getString(MapRDB.PATH_CONFIGURATION_KEY)).getStoreFor(persistenceId),
+      system,
+      fromSequenceNr,
+      toSequenceNr,
+      isStreamingQuery = true,
+      pollingIntervalMs = actorSystemConfiguration.getLong(MapRDB.EVENTS_POLLING_INTERVAL))
     )
 }
 

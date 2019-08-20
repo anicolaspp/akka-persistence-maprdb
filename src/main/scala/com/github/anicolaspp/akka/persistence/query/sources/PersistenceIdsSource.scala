@@ -3,6 +3,7 @@ package com.github.anicolaspp.akka.persistence.query.sources
 import akka.stream.stage.{GraphStage, GraphStageLogic, GraphStageLogicWithLogging, OutHandler}
 import akka.stream.{Attributes, Outlet, SourceShape}
 import com.github.anicolaspp.akka.persistence.MapRDB
+import com.github.anicolaspp.akka.persistence.query.sources.subscriber.PersistenceIdsSubscription
 import org.ojai.store.{Connection, DocumentStore, QueryCondition}
 
 import scala.collection.mutable
