@@ -13,9 +13,13 @@ object QueryExample extends App {
 
   implicit val mat = ActorMaterializer()
 
-
   val readJournal =
     PersistenceQuery(system).readJournalFor[MapRDBScalaReadJournal]("akka.persistence.query.journal")
+
+  val events = readJournal.currentEventsByPersistenceId("p-1", 3, Long.MaxValue)
+
+
+  Await.result(events.runForeach(println), scala.concurrent.duration.Duration.Inf)
 
   val boundedStream = readJournal.currentPersistenceIds().runForeach(println)
 

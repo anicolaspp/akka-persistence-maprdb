@@ -63,5 +63,7 @@ class CurrentPersistenceIdsSource(store: DocumentStore)(implicit connection: Con
 }
 
 object CurrentPersistenceIdsSource {
+
   case object Continue
+
 }

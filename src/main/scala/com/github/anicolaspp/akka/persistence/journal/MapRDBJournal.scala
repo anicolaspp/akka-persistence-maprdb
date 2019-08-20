@@ -116,7 +116,7 @@ class MapRDBJournal extends AsyncWriteJournal
 
   private def asyncWriteOperation(pr: PersistentRepr): Future[Unit] = toBytes(pr) match {
     case Success(serialized) => Future {
-      storesPool.getStoreFor(pr.persistenceId).insert(Journal.toMapRDBRow(pr.sequenceNr, serialized, pr.deleted))
+      storesPool.getStoreFor(pr.persistenceId).insert(Journal.toMapRDBRow(pr.persistenceId, pr.sequenceNr, serialized, pr.deleted))
     }
 
     case Failure(_) => Future.failed(new scala.RuntimeException("writeMessages: failed to write PersistentRepr to MapR-DB"))

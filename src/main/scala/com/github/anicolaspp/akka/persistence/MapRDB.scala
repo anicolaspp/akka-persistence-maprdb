@@ -10,6 +10,10 @@ object MapRDB {
     def toBinaryId(): ByteBuffer = ByteBuffer.wrap(BigInt(value).toByteArray)
   }
 
+  implicit class ByteBufferExt(buffer: ByteBuffer) {
+    def toLong(): Long = BigInt.apply(buffer.array()).toLong
+  }
+
   def maprdbConnectionString(config: Config): String = {
     val url = config.getString("maprdb.driver.url")
 
