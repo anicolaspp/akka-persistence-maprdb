@@ -74,6 +74,16 @@ For each persistence entity a MapR-DB tables will be created. For example, if we
 ```
 These two tables are created automatically the first time the plugin is activated, after that they will consecuentenly be used to read the initial state of the persistence entity when needed and to save new events and snapshots.
 
+### Persistence Entity Ids Table
+
+one additional MapR-DB table is created along with your journals and snapshot. The table will have the following name:
+
+```
+/user/mapr/tables/akka/ids
+```
+
+Notice that the base path is what we indicated in the configuration. The table name is `ids`. This table is set of all `persistence entity ids` that is use in the query side. There are different ways to queries the `persistence entity ids`. One possible way is to optain a handler to the MapR distributed file system (MFS) and enumerate the tables there. However, having an extra table (`ids`) makes all very easy.
+
 ### MapR Client
 
 `akka-persistence-maprdb` plugin uses [OJAI](https://mapr.com/docs/61/MapR-DB/JSON_DB/UsingJavaOJAI.html) and the MapR Client to communicate with the MapR Cluster. Make sure you have configured the MapR Client accordingly. In a secured cluster, make sure that the corresponding `mapr ticket` has been created so authentication happens correctly. 
