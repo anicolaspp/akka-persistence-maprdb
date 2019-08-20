@@ -22,12 +22,12 @@ Releases are pushed to Maven Central.
 <dependency>
   <groupId>com.github.anicolaspp</groupId>
   <artifactId>akka-persistence-maprdb_2.12</artifactId>
-  <version>1.0.1</version>
+  <version>1.0.2</version>
 </dependency>
 ```
 
 ```scala
-libraryDependencies += "com.github.anicolaspp" % "akka-persistence-maprdb_2.12" % "1.0.1"
+libraryDependencies += "com.github.anicolaspp" % "akka-persistence-maprdb_2.12" % "1.0.2"
 ```
 
 ### Activation
