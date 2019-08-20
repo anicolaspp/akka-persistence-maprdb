@@ -17,14 +17,13 @@ class CurrentPersistenceIdsSource(store: DocumentStore)(implicit connection: Con
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogicWithLogging(shape) {
     private var start = true
-    private val index = 0
     private val buffer = mutable.Queue.empty[String]
 
     private implicit def ec: ExecutionContextExecutor = materializer.executionContext
 
     setHandler(out, new OutHandler {
       override def onPull(): Unit = {
-        if (buffer.isEmpty && (start || index > 0)) {
+        if (buffer.isEmpty && start) {
           val callback = getAsyncCallback[Seq[String]] { docs =>
 
             start = false

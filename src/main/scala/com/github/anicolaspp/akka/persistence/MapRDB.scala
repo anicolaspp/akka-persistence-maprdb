@@ -29,5 +29,7 @@ object MapRDB {
   lazy val MAPR_BINARY_MARK = "persistentRepr"
 
   lazy val PATH_CONFIGURATION_KEY = "maprdb.path"
+
+  lazy val IDS_POLLING_INTERVAL = "maprdb.pollingIntervalms"
 }
 

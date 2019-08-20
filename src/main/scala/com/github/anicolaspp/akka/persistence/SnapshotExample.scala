@@ -60,10 +60,14 @@ object QueryExample extends App {
 
   implicit val mat = ActorMaterializer()
 
+
   val readJournal =
     PersistenceQuery(system).readJournalFor[MapRDBScalaReadJournal]("akka.persistence.query.journal")
 
-  val done = readJournal.currentPersistenceIds().runForeach(println)
+  val boundedStream = readJournal.currentPersistenceIds().runForeach(println)
 
-  Await.result(done, scala.concurrent.duration.Duration.Inf)
+  val unboundedStream = readJournal.persistenceIds().runForeach(println)
+
+  Await.result(boundedStream, scala.concurrent.duration.Duration.Inf)
+  Await.result(unboundedStream, scala.concurrent.duration.Duration.Inf)
 }
