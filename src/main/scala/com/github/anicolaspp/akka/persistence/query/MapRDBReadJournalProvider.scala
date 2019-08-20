@@ -7,9 +7,9 @@ import akka.persistence.query.scaladsl.{ReadJournal => SReadJournal}
 import com.typesafe.config.Config
 
 class MapRDBReadJournalProvider(system: ExtendedActorSystem, config: Config) extends ReadJournalProvider {
-  override def scaladslReadJournal(): SReadJournal = MapRDBScalaReadJournal(system, config)
+  override def scaladslReadJournal(): SReadJournal = MapRDBScalaReadJournal(system)
 
-  override def javadslReadJournal(): JReadJournal = MapRDBJavaReadJournal(system, config)
+  override def javadslReadJournal(): JReadJournal = MapRDBJavaReadJournal(system)
 }
 
 object MapRDBReadJournalProvider {
