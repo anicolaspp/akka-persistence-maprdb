@@ -9,7 +9,7 @@ This is a plugin for Akka Persistence that uses MapR-DB as backend. It implement
 - [MapR-DB Configuration](https://github.com/anicolaspp/akka-persistence-maprdb#mapr-db-configuration)
 - [Persistence Entity Ids Table](https://github.com/anicolaspp/akka-persistence-maprdb#persistence-entity-ids-table)
 - [MapR Client](https://github.com/anicolaspp/akka-persistence-maprdb#mapr-client)
-- [How is data stored in MapR-DB](https://github.com/anicolaspp/akka-persistence-maprdb#how-is-data-storey-in-mapr-db)
+- [How data is stored in MapR-DB](https://github.com/anicolaspp/akka-persistence-maprdb#how-data-is-stored-in-mapr-db)
 - [Inspecting your Journals and Snapshots](https://github.com/anicolaspp/akka-persistence-maprdb#inspecting-your-journals-and-snapshots)
 - [Journal Tests](https://github.com/anicolaspp/akka-persistence-maprdb#journal-tests)
   - [Test Output](https://github.com/anicolaspp/akka-persistence-maprdb#tests-output)
@@ -48,13 +48,13 @@ akka {
 
 ## MapR-DB Configuration
 
-TWe need some settings to be set up for MapR-DB. 
+we need some settings to be set up for MapR-DB. 
 
 - `maprdb.path` is the base MFS path where our journals and snapshots live.
 - `maprdb.pollingIntervalms` is used by the query side for polling the new persistence entity ids. 
 - `maprb.driver.url` can be used to configure what kind of MapR-DB implementation we want to use. `ojai:mapr:` points to the real MapR cluster. However, we could use an in-memory implementation through [ojai-testing](https://github.com/anicolaspp/ojai-testing) by indicating `maprdb.driver.url = ojai:anicolaspp:mem`. Notice that we package `ojai-testing` within `akka-persistence-maprdb` but it should not be used in production.  
 
-The following configuration shows that our journals and snapshots will live inside the folder `/user/mapr/tables/akka` in the MapR File System. We can indicate any valid location in the distributed file system within MFS. The polling interval is `5` seconds and we use a real MapR cluster throught the MapR client and driver. For reference about OJAI, please see the related [MapR Documentation](https://mapr.com/docs/61/MapR-DB/JSON_DB/develop-apps-jsonDB.html)
+The following configuration shows that our journals and snapshots will live inside the folder `/user/mapr/tables/akka` in the MapR File System. We can indicate any valid location in the distributed file system within MFS. The polling interval is `5` seconds and we use a real MapR cluster through the MapR client and driver. For reference about OJAI, please see the related [MapR Documentation](https://mapr.com/docs/61/MapR-DB/JSON_DB/develop-apps-jsonDB.html)
 
 ```
 maprdb {
@@ -68,13 +68,13 @@ maprdb {
 }
 ```
 
-For each persistence entity a MapR-DB tables will be created. For example, if we have the persistence entity `user` then two tables are automatically created.
+For each persistence entity, one MapR-DB table is created. For example, if we have the persistence entity `user` then two tables are automatically created.
 
 ```
 /user/mapr/tables/akka/user.journal
 /user/mapr/tables/akka/user.snapshot
 ```
-These two tables are created automatically the first time the plugin is activated, after that they will consecuentenly be used to read the initial state of the persistence entity when needed and to save new events and snapshots.
+These two tables are created automatically the first time the plugin is activated, after that they will consequently be used to read the initial state of the persistence entity when needed and to save new events and snapshots.
 
 ## Persistence Entity Ids Table
 
@@ -84,15 +84,15 @@ One additional MapR-DB table is created along with your journals and snapshot. T
 /user/mapr/tables/akka/ids
 ```
 
-Notice that the base path is what we indicated in the configuration. The table name is `ids`. This table is set of all `persistence entity ids` that is use in the query side. There are different ways to queries the `persistence entity ids`. One possible way is to optain a handler to the MapR distributed file system (MFS) and enumerate the tables there. However, having an extra table (`ids`) makes all very easy.
+Notice that the base path is what we indicated in the configuration. The table name is `ids`. This table is set of all `persistence entity ids` that is used in the query side. There are different ways to queries the `persistence entity ids`. One possible way is to obtain a handler to the MapR distributed file system (MFS) and enumerate the tables there. However, having an extra table (`ids`) makes all very easy.
 
 ## MapR Client
 
 `akka-persistence-maprdb` plugin uses [OJAI](https://mapr.com/docs/61/MapR-DB/JSON_DB/UsingJavaOJAI.html) and the MapR Client to communicate with the MapR Cluster. Make sure you have configured the MapR Client accordingly. In a secured cluster, make sure that the corresponding `mapr ticket` has been created so authentication happens correctly. 
 
-## How is data storey in MapR-DB?
+## How data is stored in MapR-DB?
 
-`akka-persistence-maprdb` plugin uses MapR-DB JSON to store the corresponding user defined events and persistence entity snapshots into MapR-DB. 
+`akka-persistence-maprdb` plugin uses MapR-DB JSON to store the corresponding user-defined events and persistence entity snapshots into MapR-DB. 
 
 As mentioned above, each `.journal` table contains the events for the corresponding persistent entity and the following structure is used. 
 
@@ -106,7 +106,7 @@ As mentioned above, each `.journal` table contains the events for the correspond
 
 Each row is an even and they are sorted by MapR-DB based on the `_id` in `ASC` order.
 
-Each `.snapshot` table represents the snapshots taken for an especific persistent entity and the following structure is used. 
+Each `.snapshot` table represents the snapshots taken for a specific persistent entity and the following structure is used. 
 
 ```
 {
@@ -122,7 +122,7 @@ Each `.snapshot` table represents the snapshots taken for an especific persisten
 
 ## Inspecting your Journals and Snapshots
 
-At any moment in time, we could use of the many avaible tools to inspect the corresponding structures created by this library. 
+At any moment in time, we could use one of the many available tools to inspect the corresponding structures created by this library. 
 
 ### Using MapR DBShell
 
@@ -180,7 +180,7 @@ maprdb mapr:> find /user/mapr/tables/akka/ids
 ```
 Notice that the `ids` table has each `persistence entity id` along with the path where it lives.
 
-Now let's inspect one of the the `journal`s.
+Now let's inspect one of the `journal`s.
 
 ```sh
 maprdb mapr:> find /user/mapr/tables/akka/p-1.journal
@@ -196,8 +196,7 @@ The previous example shows the content of `p-1.journal`. Notice that the structu
 
 ## Journal Tests 
 
-All tests for the journal passed. However, since we don't have a MapR Cluster in Travis we are going to ignore the 
-the test. One can run the test locally against a configured MapR Cluster
+All tests for the journal passed. However, since we don't have a MapR Cluster in Travis we are going to ignore the test. One can run the test locally against a configured MapR Cluster
 
 ### Tests Output
 
@@ -236,7 +235,7 @@ the test. One can run the test locally against a configured MapR Cluster
 The current version supports Persistence Read Side. The following two queries have been added. 
 
 - `currentPersistenceIds()` gives back the persistence ids in a bounded stream that is closed after completion
-- `persistenceIds()` gives back the persistence ids in an unbounded stream that keeps open. New persistence ids will pushed into this stream.
+- `persistenceIds()` gives back the persistence ids in an unbounded stream that keeps open. New persistence ids will be pushed into this stream.
 
 ```scala
 object QueryExample extends App {
@@ -258,3 +257,4 @@ object QueryExample extends App {
 }
 ```
 
+More queries are coming soon.
