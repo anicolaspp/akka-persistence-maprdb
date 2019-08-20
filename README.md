@@ -137,4 +137,28 @@ the test. One can run the test locally against a configured MapR Cluster
 
 ### Query Side
 
-The Query Side is optional, hence not included in first version. An implementation of the Query (Read) Side is under development at the moment.
+The current version supports Persistence Read Side. The following two queries have been added. 
+
+- `currentPersistenceIds()` gives back the persistence ids in a bounded stream that is closed after completion
+- `persistenceIds()` gives back the persistence ids in an unbounded stream that keeps open. New persistence ids will pushed into this stream.
+
+```scala
+object QueryExample extends App {
+
+  implicit val system = ActorSystem("example")
+
+  implicit val mat = ActorMaterializer()
+
+
+  val readJournal =
+    PersistenceQuery(system).readJournalFor[MapRDBScalaReadJournal]("akka.persistence.query.journal")
+
+  val boundedStream = readJournal.currentPersistenceIds().runForeach(println)
+
+  val unboundedStream = readJournal.persistenceIds().runForeach(println)
+
+  Await.result(boundedStream, scala.concurrent.duration.Duration.Inf)
+  Await.result(unboundedStream, scala.concurrent.duration.Duration.Inf)
+}
+```
+
