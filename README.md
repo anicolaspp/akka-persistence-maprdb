@@ -46,13 +46,23 @@ akka {
 
 ### MapR-DB Configuration
 
-The only configuration key we need from MapR-DB is where our journal and snapshots are going to live. 
+TWe need some settings to be set up for MapR-DB. 
 
-The following configuration shows that our journals and snapshots will live inside the folder `/user/mapr/tables/akka` in the MapR File System. We can indicate any valid location in the distributed file system within MFS. 
+- `maprdb.path` is the base MFS path where our journals and snapshots live.
+- `maprdb.pollingIntervalms` is used by the query side for polling the new persistence entity ids. 
+- `maprb.driver.url` can be used to configure what kind of MapR-DB implementation we want to use. `ojai:mapr:` points to the real MapR cluster. However, we could use an in-memory implementation through [ojai-testing](https://github.com/anicolaspp/ojai-testing) by indicating `maprdb.driver.url = ojai:anicolaspp:mem`. Notice that we package `ojai-testing` within `akka-persistence-maprdb` but it should not be used in production.  
+
+The following configuration shows that our journals and snapshots will live inside the folder `/user/mapr/tables/akka` in the MapR File System. We can indicate any valid location in the distributed file system within MFS. The polling interval is `5` seconds and we use a real MapR cluster throught the MapR client and driver. For reference about OJAI, please see the related [MapR Documentation](https://mapr.com/docs/61/MapR-DB/JSON_DB/develop-apps-jsonDB.html)
 
 ```
 maprdb {
   path = "/user/mapr/tables/akka"
+  
+  pollingIntervalms = 5000
+  
+  driver {
+    url = "ojai:mapr:"
+  }
 }
 ```
 
