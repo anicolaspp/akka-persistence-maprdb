@@ -2,16 +2,18 @@ package com.github.anicolaspp.akka.persistence.query
 
 import akka.NotUsed
 import akka.actor.ExtendedActorSystem
-import akka.persistence.query.scaladsl.{CurrentPersistenceIdsQuery, PersistenceIdsQuery, ReadJournal}
+import akka.persistence.query.EventEnvelope
+import akka.persistence.query.scaladsl.{CurrentEventsByPersistenceIdQuery, CurrentPersistenceIdsQuery, EventsByPersistenceIdQuery, PersistenceIdsQuery, ReadJournal}
 import akka.stream.scaladsl.Source
 import com.github.anicolaspp.akka.persistence.ojai.StorePool
 import com.github.anicolaspp.akka.persistence.query.sources.{CurrentPersistenceIdsSource, PersistenceIdsSource}
 import com.github.anicolaspp.akka.persistence.{MapRDB, MapRDBConnectionProvider}
 import com.typesafe.config.Config
 
-class MapRDBScalaReadJournal(system: ExtendedActorSystem, config: Config) extends ReadJournal
+class MapRDBScalaReadJournal private[anicolaspp](system: ExtendedActorSystem) extends ReadJournal
   with CurrentPersistenceIdsQuery
   with PersistenceIdsQuery
+  with CurrentEventsByPersistenceIdQuery
   with MapRDBConnectionProvider {
 
   /**
@@ -39,8 +41,15 @@ class MapRDBScalaReadJournal(system: ExtendedActorSystem, config: Config) extend
 
   override def actorSystemConfiguration: Config = system.settings.config
 
+  /**
+   * Same type of query as [[EventsByPersistenceIdQuery#eventsByPersistenceId]]
+   * but the event stream is completed immediately when it reaches the end of
+   * the "result set". Events that are stored after the query is completed are
+   * not included in the event stream.
+   */
+  override def currentEventsByPersistenceId(persistenceId: String, fromSequenceNr: Long, toSequenceNr: Long): Source[EventEnvelope, NotUsed] = ???
 }
 
 object MapRDBScalaReadJournal {
-  def apply(system: ExtendedActorSystem, config: Config): MapRDBScalaReadJournal = new MapRDBScalaReadJournal(system: ExtendedActorSystem, config: Config)
+  def apply(system: ExtendedActorSystem): MapRDBScalaReadJournal = new MapRDBScalaReadJournal(system)
 }
