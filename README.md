@@ -18,18 +18,18 @@ This is a plugin for Akka Persistence that uses MapR-DB as backend. It implement
 
 ## Linking
 
-Releases are pushed to Maven Central.
+Releases are pushed to Maven Central. Click the Maven Central back to check the latest version there. 
 
 ```xml
 <dependency>
   <groupId>com.github.anicolaspp</groupId>
   <artifactId>akka-persistence-maprdb_2.12</artifactId>
-  <version>1.0.3</version>
+  <version>X.Y.Z</version>
 </dependency>
 ```
 
 ```scala
-libraryDependencies += "com.github.anicolaspp" % "akka-persistence-maprdb_2.12" % "1.0.3"
+libraryDependencies += "com.github.anicolaspp" % "akka-persistence-maprdb_2.12" % "X.Y.Z"
 ```
 
 ## Activation
