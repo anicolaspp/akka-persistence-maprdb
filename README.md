@@ -14,6 +14,7 @@ This is a plugin for Akka Persistence that uses MapR-DB as backend. It implement
 - [Journal Tests](https://github.com/anicolaspp/akka-persistence-maprdb#journal-tests)
   - [Test Output](https://github.com/anicolaspp/akka-persistence-maprdb#tests-output)
 - [Persistence Query Side](https://github.com/anicolaspp/akka-persistence-maprdb#query-side)
+  - [Tagging Events and Events by Tags](https://github.com/anicolaspp/akka-persistence-maprdb#tagging-events-and-events-by-tags)
 
 
 ## Linking
@@ -264,3 +265,7 @@ object QueryExample extends App {
   Await.result(liveEvents.runForeach(println), scala.concurrent.duration.Duration.Inf)
 }
 ```
+
+### Tagging Events and Events by Tags
+
+At the moment, tagging is not support and the the `readJournal` does not support queries by tag. We are working on these features at the moment and when ready a new release will be made. 
