@@ -2,7 +2,7 @@ package com.github.anicolaspp.akka.persistence.journal
 
 import akka.actor.{ActorLogging, ActorSystem}
 import akka.persistence._
-import akka.persistence.journal.AsyncWriteJournal
+import akka.persistence.journal.{AsyncWriteJournal, Tagged}
 import com.github.anicolaspp.akka.persistence.ByteArraySerializer
 import com.github.anicolaspp.akka.persistence.MapRDB._
 import com.github.anicolaspp.akka.persistence.ojai.MapRDBConnectionProvider
@@ -115,10 +115,26 @@ class MapRDBJournal extends AsyncWriteJournal
 
   private def asyncWriteOperation(pr: PersistentRepr): Future[Unit] = toBytes(pr) match {
     case Success(serialized) => Future {
-      storesPool.getStoreFor(pr.persistenceId).insert(Journal.toMapRDBRow(pr.persistenceId, pr.sequenceNr, serialized, pr.deleted))
+      storesPool
+        .getStoreFor(pr.persistenceId)
+        .insert(Journal.toMapRDBRow(pr.persistenceId, pr.sequenceNr, serialized, pr.deleted))
+
+      getTags(pr).map(tagged => writeTags(tagged, serialized))
     }
 
     case Failure(_) => Future.failed(new scala.RuntimeException("writeMessages: failed to write PersistentRepr to MapR-DB"))
   }
+
+  private def getTags(pr: PersistentRepr): Option[Tagged] = pr match {
+    case tagged@Tagged(_, _) => Some(tagged)
+    case _ => None
+  }
+
+  private def writeTags(tagged: Tagged, eventSerializedRepresentation: Array[Byte]): Unit =
+    tagged
+      .tags
+      .map(tag => Journal.tagToMapRDBRow(tag, eventSerializedRepresentation))
+      .foreach(storesPool.getTagsStore().insert)
+
 }
 

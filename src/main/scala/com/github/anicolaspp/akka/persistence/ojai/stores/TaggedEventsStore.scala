@@ -10,6 +10,9 @@ private case class TaggedEventsStore(path: String)(implicit connection: Connecti
   override def getTagsStore(): DocumentStore = store
 }
 
+/**
+ * There is a single instance of this tagged events stores
+ */
 object TaggedEventsStore {
   private var taggedEventsStore: TagsStore = _
 

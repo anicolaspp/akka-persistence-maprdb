@@ -10,6 +10,9 @@ private case class PersistenceEntitiesIdsStore(path: String)(implicit connection
   override def getStore(): DocumentStore = store
 }
 
+/**
+ * There is a single instance of the ids stores.
+ */
 object PersistenceEntitiesIdsStore {
   private var idStore: IdsStore = _
 
