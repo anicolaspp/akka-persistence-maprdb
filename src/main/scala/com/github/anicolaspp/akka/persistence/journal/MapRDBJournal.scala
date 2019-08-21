@@ -18,17 +18,15 @@ class MapRDBJournal extends AsyncWriteJournal
   with ByteArraySerializer
   with MapRDBConnectionProvider {
 
-  implicit lazy val actorSystem: ActorSystem = context.system
-
-  //  implicit val connection: Connection = DriverManager.getConnection(maprdbConnectionString(config))
-
-  implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
-
-  def actorSystemConfiguration: Config = actorSystem.settings.config
+  private implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
 
   private val journalPath = actorSystemConfiguration.getString(PATH_CONFIGURATION_KEY)
 
   private val storesPool = StorePool.journalFor(journalPath)
+
+  override implicit lazy val actorSystem: ActorSystem = context.system
+
+  override def actorSystemConfiguration: Config = actorSystem.settings.config
 
   override def asyncWriteMessages(messages: immutable.Seq[AtomicWrite]): Future[immutable.Seq[Try[Unit]]] =
     Future.sequence(messages.map(asyncWriteBatch))
