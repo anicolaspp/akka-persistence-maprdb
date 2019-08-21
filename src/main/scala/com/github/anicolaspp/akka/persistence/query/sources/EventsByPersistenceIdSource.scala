@@ -32,13 +32,16 @@ class EventsByPersistenceIdSource(store: DocumentStore,
 
   override def shape: SourceShape[EventEnvelope] = SourceShape(out)
 
-  override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogicWithLogging(shape) with ByteArraySerializer {
+  override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogicWithLogging(shape)
+    with ByteArraySerializer {
+
     private var started = false
     private val buffer = mutable.Queue.empty[EventEnvelope]
 
     override implicit lazy val actorSystem: ActorSystem = system
 
-    private lazy val eventSubscription = new PersistenceEntityEventsSubscriber(store, isStreamingQuery)
+    private lazy val eventSubscription =
+      new PersistenceEntityEventsSubscriber(store, fromSequenceNr, toSequenceNr, isStreamingQuery)
 
     private val callback = getAsyncCallback[Seq[Document]] { documents =>
       getEvents(documents)
@@ -73,7 +76,7 @@ class EventsByPersistenceIdSource(store: DocumentStore,
 
           eventSubscription.subscribe(pollingIntervalMs, callback.invoke)
 
-        } else if (buffer.nonEmpty) {
+        } else {
           deliver()
         }
       }

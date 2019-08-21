@@ -6,7 +6,11 @@ import org.ojai.store.{Connection, DocumentStore, QueryCondition}
 
 import scala.util.Try
 
-class PersistenceEntityEventsSubscriber(store: DocumentStore, streaming: Boolean)(implicit connection: Connection) extends Subscription[Seq[Document]] {
+class PersistenceEntityEventsSubscriber private[anicolaspp](store: DocumentStore,
+                                                            fromSequenceNr: Long,
+                                                            toSequenceNr: Long,
+                                                            streaming: Boolean)(implicit connection: Connection)
+  extends Subscription[Seq[Document]] {
 
   import MapRDB._
 
@@ -15,7 +19,17 @@ class PersistenceEntityEventsSubscriber(store: DocumentStore, streaming: Boolean
 
   override def isRunning: Boolean = running
 
+  private lazy val rangeCondition = connection
+    .newCondition()
+    .and()
+    .is(MAPR_ENTITY_ID, QueryCondition.Op.GREATER_OR_EQUAL, fromSequenceNr.toBinaryId())
+    .is(MAPR_ENTITY_ID, QueryCondition.Op.LESS_OR_EQUAL, toSequenceNr.toBinaryId())
+    .close()
+    .build()
+
   override def subscribe(pollingIntervalMs: Long, fn: Seq[Document] => Unit): Unit = {
+    println("STARTING SUBSCRIPTION...")
+
     val subscriber = new Thread {
       setDaemon(true)
 
@@ -71,7 +85,10 @@ class PersistenceEntityEventsSubscriber(store: DocumentStore, streaming: Boolean
 
     val condition = connection
       .newCondition()
+      .and()
       .is(MapRDB.MAPR_ENTITY_ID, op, from.toBinaryId())
+      .condition(rangeCondition)
+      .close()
       .build()
 
     val query = connection
