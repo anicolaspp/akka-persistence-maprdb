@@ -125,7 +125,7 @@ class MapRDBJournal extends AsyncWriteJournal
     case Failure(_) => Future.failed(new scala.RuntimeException("writeMessages: failed to write PersistentRepr to MapR-DB"))
   }
 
-  private def getTags(pr: PersistentRepr): Option[Tagged] = pr match {
+  private def getTags(pr: PersistentRepr): Option[Tagged] = pr.payload match {
     case tagged@Tagged(_, _) => Some(tagged)
     case _ => None
   }
