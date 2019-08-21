@@ -5,9 +5,10 @@ import akka.actor.ExtendedActorSystem
 import akka.persistence.query.EventEnvelope
 import akka.persistence.query.scaladsl.{CurrentEventsByPersistenceIdQuery, CurrentPersistenceIdsQuery, EventsByPersistenceIdQuery, PersistenceIdsQuery, ReadJournal}
 import akka.stream.scaladsl.Source
-import com.github.anicolaspp.akka.persistence.ojai.{MapRDBConnectionProvider, StorePool}
+import com.github.anicolaspp.akka.persistence.ojai.MapRDBConnectionProvider
 import com.github.anicolaspp.akka.persistence.query.sources.{CurrentPersistenceIdsSource, EventsByPersistenceIdSource, PersistenceIdsSource}
 import com.github.anicolaspp.akka.persistence.MapRDB
+import com.github.anicolaspp.akka.persistence.ojai.stores.StorePool
 import com.typesafe.config.Config
 
 class MapRDBScalaReadJournal private[anicolaspp](system: ExtendedActorSystem) extends ReadJournal

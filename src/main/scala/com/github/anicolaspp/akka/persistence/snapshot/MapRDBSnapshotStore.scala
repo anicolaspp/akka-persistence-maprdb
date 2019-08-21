@@ -5,7 +5,8 @@ import akka.persistence.snapshot.SnapshotStore
 import akka.persistence.{SelectedSnapshot, SnapshotMetadata, SnapshotSelectionCriteria}
 import com.github.anicolaspp.akka.persistence.ByteArraySerializer
 import com.github.anicolaspp.akka.persistence.MapRDB._
-import com.github.anicolaspp.akka.persistence.ojai.{MapRDBConnectionProvider, StorePool}
+import com.github.anicolaspp.akka.persistence.ojai.MapRDBConnectionProvider
+import com.github.anicolaspp.akka.persistence.ojai.stores.StorePool
 import com.github.anicolaspp.akka.persistence.snapshot.Snapshot._
 import com.typesafe.config.Config
 import org.ojai.store.{QueryCondition, SortOrder}
