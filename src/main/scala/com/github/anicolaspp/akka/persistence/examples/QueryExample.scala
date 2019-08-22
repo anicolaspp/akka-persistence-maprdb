@@ -20,8 +20,6 @@ object QueryExample extends App {
 
   val currentEventsByTag = readJournal.currentEventsByTag("boy", Offset.noOffset).runForeach(println)
 
-  readJournal.eventsByTag("", Offset.sequence(5)).runWith(Sink.asPublisher(publisher))
-
   Await.result(currentEventsByTag, scala.concurrent.duration.Duration.Inf)
 
 //  val events = readJournal.currentEventsByPersistenceId("sample-id-3", 3, Long.MaxValue)
