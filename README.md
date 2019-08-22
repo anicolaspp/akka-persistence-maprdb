@@ -268,4 +268,124 @@ object QueryExample extends App {
 
 ### Tagging Events and Events by Tags
 
-At the moment, tagging is not support and the the `readJournal` does not support queries by tag. We are working on these features at the moment and when ready a new release will be made. 
+In general, `Tagged` events are just a especial kind of events. All along you could send a `Tagged` event to the 
+persistence entity and it ends up being saved in the corresponding `Journal` for the entity. Queries that are based
+on events by persistence id will retrieve all the events of the entity (including any `Tagged` event) back to you. 
+
+However, querying `Tagged` events across multiple persistence entities was not possible before version `1.0.6`. 
+
+Since version `1.0.6` we added support for querying `Tagged` events. 
+
+### Crating a tag event
+
+The following `Actor` code shows how we create `Tagged` events. 
+
+```scala
+       final case class ExampleState(received: List[String] = Nil) {
+           def updated(s: String): ExampleState = copy(s :: received)
+       
+           override def toString = received.reverse.toString
+         }
+       
+         class ExamplePersistentActor extends PersistentActor {
+           override def persistenceId: String = "sample-id-3"
+       
+           var state = ExampleState()
+       
+           override def receiveCommand: Receive = {
+             case "print" => println("current state = " + state)
+             case "snap" => saveSnapshot(state)
+             case SaveSnapshotSuccess(metadata) => // ...
+             case SaveSnapshotFailure(metadata, reason) => // ...
+             case s: String =>
+               persist(s) { evt => state = state.updated(evt) }
+       
+             case (s: String, tags: Seq[String]) =>
+               persist(Tagged(s, tags.toSet)) { evt => state = state.updated(evt.payload.toString) }
+           }
+       
+           override def receiveRecover: Receive = {
+             case SnapshotOffer(_, s: ExampleState) =>
+               println("offered state = " + s)
+               state = s
+             case evt: String =>
+               state = state.updated(evt)
+           }
+         }
+```           
+
+Notice the `case (s: String, tags: Seq[String])` since it will create a `Tagged` event and send it to the `Journal`
+to be persisted.  
+
+The following code uses the defined `Actor` to create `Tagged` events.
+
+```scala
+val system = ActorSystem("example")
+val persistentActor = system.actorOf(Props(classOf[ExamplePersistentActor]), "persistentActor-3-scala")
+
+persistentActor ! ("nick", Seq("boy", "30"))
+```
+
+### Querying Tagged Events
+
+The idea of `Tagged` events is that they can be queried across multiple persistence entities. In other words, when
+retrieving events with a specific tag, they might not all from the same persistence entity id, any event in the entire
+system that was tagged with the given tag will be retrieved. 
+
+The following code shows how to retrieve `Tagged` events.
+
+```scala    
+val readJournal =
+    PersistenceQuery(system).readJournalFor[MapRDBScalaReadJournal]("akka.persistence.query.journal")
+
+val currentEventsByTag = readJournal.currentEventsByTag("boy", Offset.noOffset).runForeach(println)
+  
+readJournal.eventsByTag("", Offset.sequence(5)).runWith(Sink.asPublisher(publisher))
+```     
+
+- `currentEventsByTag` is the sequence of current `Tagged` event by the given tag.
+-  `eventsByTag` is an open stream of `Tagged` event by the given tag that is kept alive waiting for more events in live
+fashion scenario. 
+
+### Ordering and Offsets
+
+It is important to describe the semantics offered by the library in regard of `ordering` and `offsets` for `Tagged` events.
+
+`Tagged` events are sorted by the `timestamp` at the moment they are written by the `Journal` so they are retrieved in
+the exact same order. 
+
+When retrieving `Tagged` events, the only supported `Offset` is `Offset.sequence` any other being passed will be treated
+as `Offset.noOffset` meaning that the offset will start at `Offset.sequence(0)`. Since we are retrieving events by tag,
+the given offset refers to the offset of the `Tagged` stream after the events for the given tag is calculated.
+
+Let's look at an example that might clarify how it works. 
+
+```scala
+taggedEvents: [(t1, e1), (t2, e1), (t1, e2), (t3, e3), (t1, e4), (t1, e5)]
+```     
+
+Notice that tag `t1` has events `e1`, `e2`, `e4` and `e5` associated to it. 
+
+Not if we want the events associated with tag `t1` and `Offset.noOffset`, the events `e1`, `e2`, `e4` and `e5` are 
+retrieved since offset was effectively `0`.     
+
+Changing the query by moving the offset will result in a different set of events. Using `Offset.sequence(2)` for instance,
+will return only  events `e4` and `e5` since for the given tag `t1` it is skipping the first `2` events. 
+
+In general, the offset is applied to the resultant stream of events associated with the given tag. Notice that the 
+given offsets is applied only once, meaning that is your query is `eventsByTag` it will move the cursor the offset, but
+all new events after the offset will be pushed in the stream as they arrive.                                                            
+
+### MapR-DB Tagged structure. 
+
+The internal structure being used for storing `Tagged` events is very simplistic. However, the number of `Tagged` events
+can be overwhelming. Even though, MapR-DB is insanely fast for the queries being used, it might be a good idea to 
+create a secondary index on `taggedEvents` table. The following command shows how it can be done, but the MapR Control System
+can also be used. 
+
+```shell script
+maprcli table index add -path /user/mapr/tables/akka/taggedEvents -index tagged_events_idx -indexedfields tags  
+```                 
+
+Notice that the based path `/user/mapr/tables/akka/` is where you persistence entities live (configurable) and the 
+`taggedEvents` in the table where `Tagged` events are stored.

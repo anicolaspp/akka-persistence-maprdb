@@ -36,8 +36,6 @@ object SnapshotExample extends App {
       case evt: String =>
         state = state.updated(evt)
     }
-
-//    override def journalPluginId: String = "akka-persistence-maprdb"
   }
 
   val system = ActorSystem("example")

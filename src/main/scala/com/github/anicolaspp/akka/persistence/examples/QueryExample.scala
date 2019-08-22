@@ -3,6 +3,7 @@ package com.github.anicolaspp.akka.persistence.examples
 import akka.actor.ActorSystem
 import akka.persistence.query.{Offset, PersistenceQuery}
 import akka.stream.ActorMaterializer
+import akka.stream.javadsl.JavaFlowSupport.Sink
 import com.github.anicolaspp.akka.persistence.query.MapRDBScalaReadJournal
 
 import scala.concurrent.{Await, Future}
@@ -18,6 +19,8 @@ object QueryExample extends App {
 
 
   val currentEventsByTag = readJournal.currentEventsByTag("boy", Offset.noOffset).runForeach(println)
+
+  readJournal.eventsByTag("", Offset.sequence(5)).runWith(Sink.asPublisher(publisher))
 
   Await.result(currentEventsByTag, scala.concurrent.duration.Duration.Inf)
 
