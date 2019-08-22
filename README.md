@@ -394,3 +394,9 @@ maprcli table index add -path /user/mapr/tables/akka/taggedEvents -index tagged_
 
 Notice that the based path `/user/mapr/tables/akka/` is where you persistence entities live (configurable) and the 
 `taggedEvents` in the table where `Tagged` events are stored.
+
+## MapR-DB Performance
+
+It is known that MapR-DB is quite faster than Cassandra [read paper here](https://mapr.com/blog/database-comparison-an-in-depth-look-at-mapr-db/) while keeping hight consistency with zero tunning. The following [ESG Lab Analysis](https://mapr.com/whitepapers/mike-leone-esg-lab-nosql-benchmark/) shows that MapR-DB yielded an average performance improvement of 2.5x more operations/sec than Cassandra and 5.5x more than HBase.
+
+`akka-persistence-maprdb` plugin has been designed to take advantage of the especific contructs that MapR-DB offers. There is no need to for tunning other than the explained in [MapR-DB Tagged Structure](https://github.com/anicolaspp/akka-persistence-maprdb#mapR-DB-tagged-structure)
