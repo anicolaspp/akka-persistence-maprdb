@@ -236,7 +236,7 @@ All tests for the journal passed. However, since we don't have a MapR Cluster in
 
 ## Query Side
 
-The current version supports Persistence Read Side. The following two queries have been added. 
+The current version supports Persistence Read Side. The following queries have been added. 
 
 - `currentPersistenceIds()` gives back the persistence ids in a bounded stream that is closed after completion
 - `persistenceIds()` gives back the persistence ids in an unbounded stream that keeps open. New persistence ids will be pushed into this stream.
