@@ -15,6 +15,9 @@ This is a plugin for Akka Persistence that uses MapR-DB as backend. It implement
   - [Test Output](https://github.com/anicolaspp/akka-persistence-maprdb#tests-output)
 - [Persistence Query Side](https://github.com/anicolaspp/akka-persistence-maprdb#query-side)
   - [Tagging Events and Events by Tags](https://github.com/anicolaspp/akka-persistence-maprdb#tagging-events-and-events-by-tags)
+  - [Querying Tagged Events](https://github.com/anicolaspp/akka-persistence-maprdb#querying-tagged-events)
+  - [Ordering and Offsets](https://github.com/anicolaspp/akka-persistence-maprdb#ordering-and-offsets)
+  - [MapR-DB Tagged structure](https://github.com/anicolaspp/akka-persistence-maprdb#mapR-DB-tagged-structure)
 
 
 ## Linking
@@ -366,7 +369,7 @@ taggedEvents: [(t1, e1), (t2, e1), (t1, e2), (t3, e3), (t1, e4), (t1, e5)]
 
 Notice that tag `t1` has events `e1`, `e2`, `e4` and `e5` associated to it. 
 
-Not if we want the events associated with tag `t1` and `Offset.noOffset`, the events `e1`, `e2`, `e4` and `e5` are 
+Now, if we want the events associated with tag `t1` and `Offset.noOffset`, the events `e1`, `e2`, `e4` and `e5` are 
 retrieved since offset was effectively `0`.     
 
 Changing the query by moving the offset will result in a different set of events. Using `Offset.sequence(2)` for instance,
