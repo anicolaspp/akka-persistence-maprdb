@@ -332,7 +332,7 @@ persistentActor ! ("nick", Seq("boy", "30"))
 ### Querying Tagged Events
 
 The idea of `Tagged` events is that they can be queried across multiple persistence entities. In other words, when
-retrieving events with a specific tag, they might not all from the same persistence entity id, any event in the entire
+retrieving events with a specific tag, they might not all com from the same persistence entity id, any event in the entire
 system that was tagged with the given tag will be retrieved. 
 
 The following code shows how to retrieve `Tagged` events.
@@ -355,7 +355,7 @@ fashion scenario.
 It is important to describe the semantics offered by the library in regard of `ordering` and `offsets` for `Tagged` events.
 
 `Tagged` events are sorted by the `timestamp` at the moment they are written by the `Journal` so they are retrieved in
-the exact same order. 
+the exact same order. In highly async contexts, some `Tagged` events might take longer to persist than others. However, the sorting happens using the creation `timestamp` and it does not matter in what order they are actually written to the storage. 
 
 When retrieving `Tagged` events, the only supported `Offset` is `Offset.sequence` any other being passed will be treated
 as `Offset.noOffset` meaning that the offset will start at `Offset.sequence(0)`. Since we are retrieving events by tag,
