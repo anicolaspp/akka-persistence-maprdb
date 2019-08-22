@@ -375,6 +375,8 @@ retrieved since offset was effectively `0`.
 Changing the query by moving the offset will result in a different set of events. Using `Offset.sequence(2)` for instance,
 will return only  events `e4` and `e5` since for the given tag `t1` it is skipping the first `2` events. 
 
+It is important to notice that `Offset`s in the events from these queries is stable. In the previous example where `Offset.noOffset`, `e1` will have `Offset` `0` and `e5` will have `Offset` `3`. When `Offset.sequence(2)`, `e4` will have `Offset` `2` and `e5` will have `Offset` `3`. 
+
 In general, the offset is applied to the resultant stream of events associated with the given tag. Notice that the 
 given offsets is applied only once, meaning that is your query is `eventsByTag` it will move the cursor the offset, but
 all new events after the offset will be pushed in the stream as they arrive.                                                            
