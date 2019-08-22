@@ -1,10 +1,18 @@
 package com.github.anicolaspp.akka.persistence.ojai.stores
 
-import com.github.anicolaspp.akka.persistence.ojai.{IdsStore, TagsStore}
 import com.github.anicolaspp.akka.persistence.{Journal, Snapshot, StoreType}
 import org.ojai.store.{Connection, DocumentStore}
 
+/**
+ * Pool of [[DocumentStore]] that are kept alive and reused in order to minimize the their creation.
+ */
 trait StorePool extends IdsStore with TagsStore {
+
+  /**
+   * Get a handler to the [[DocumentStore]] where the [[persistentId]] belongs to.
+   * @param persistentId
+   * @return
+   */
   def getStoreFor(persistentId: String): DocumentStore
 }
 

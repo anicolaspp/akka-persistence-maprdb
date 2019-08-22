@@ -2,13 +2,13 @@ package com.github.anicolaspp.akka.persistence.query
 
 import akka.NotUsed
 import akka.actor.ExtendedActorSystem
-import akka.persistence.query.EventEnvelope
-import akka.persistence.query.scaladsl.{CurrentEventsByPersistenceIdQuery, CurrentPersistenceIdsQuery, EventsByPersistenceIdQuery, PersistenceIdsQuery, ReadJournal}
+import akka.persistence.query.scaladsl._
+import akka.persistence.query.{EventEnvelope, Offset}
 import akka.stream.scaladsl.Source
-import com.github.anicolaspp.akka.persistence.ojai.MapRDBConnectionProvider
-import com.github.anicolaspp.akka.persistence.query.sources.{CurrentPersistenceIdsSource, EventsByPersistenceIdSource, PersistenceIdsSource}
 import com.github.anicolaspp.akka.persistence.MapRDB
+import com.github.anicolaspp.akka.persistence.ojai.MapRDBConnectionProvider
 import com.github.anicolaspp.akka.persistence.ojai.stores.StorePool
+import com.github.anicolaspp.akka.persistence.query.sources.{EventsByPersistenceIdSource, EventsByTagSource, PersistenceIdsSource}
 import com.typesafe.config.Config
 
 class MapRDBScalaReadJournal private[anicolaspp](system: ExtendedActorSystem) extends ReadJournal
@@ -16,6 +16,8 @@ class MapRDBScalaReadJournal private[anicolaspp](system: ExtendedActorSystem) ex
   with PersistenceIdsQuery
   with CurrentEventsByPersistenceIdQuery
   with EventsByPersistenceIdQuery
+  with CurrentEventsByTagQuery
+  with EventsByTagQuery
   with MapRDBConnectionProvider {
 
   /**
@@ -24,7 +26,12 @@ class MapRDBScalaReadJournal private[anicolaspp](system: ExtendedActorSystem) ex
    * actors that are created after the query is completed are not included in the stream.
    */
   override def currentPersistenceIds(): Source[String, NotUsed] =
-    Source.fromGraph(new CurrentPersistenceIdsSource(StorePool.idsStore(actorSystemConfiguration.getString(MapRDB.PATH_CONFIGURATION_KEY))))
+    Source.fromGraph(new PersistenceIdsSource(
+      StorePool.idsStore(actorSystemConfiguration.getString(MapRDB.PATH_CONFIGURATION_KEY)),
+      system,
+      isStreamingQuery = false,
+      pollingIntervalMs = actorSystemConfiguration.getLong(MapRDB.IDS_POLLING_INTERVAL)
+    ))
 
   /**
    * Query all `PersistentActor` identifiers, i.e. as defined by the
@@ -38,7 +45,9 @@ class MapRDBScalaReadJournal private[anicolaspp](system: ExtendedActorSystem) ex
   override def persistenceIds(): Source[String, NotUsed] =
     Source.fromGraph(new PersistenceIdsSource(
       StorePool.idsStore(actorSystemConfiguration.getString(MapRDB.PATH_CONFIGURATION_KEY)),
-      actorSystemConfiguration.getLong(MapRDB.IDS_POLLING_INTERVAL)
+      system,
+      isStreamingQuery = true,
+      pollingIntervalMs = actorSystemConfiguration.getLong(MapRDB.IDS_POLLING_INTERVAL)
     ))
 
   override def actorSystemConfiguration: Config = system.settings.config
@@ -77,6 +86,54 @@ class MapRDBScalaReadJournal private[anicolaspp](system: ExtendedActorSystem) ex
       system,
       fromSequenceNr,
       toSequenceNr,
+      isStreamingQuery = true,
+      pollingIntervalMs = actorSystemConfiguration.getLong(MapRDB.EVENTS_POLLING_INTERVAL))
+    )
+
+  /**
+   * Same type of query as [[EventsByTagQuery#eventsByTag]] but the event stream
+   * is completed immediately when it reaches the end of the "result set". Events that are
+   * stored after the query is completed are not included in the event stream.
+   */
+  override def currentEventsByTag(tag: String, offset: Offset): Source[EventEnvelope, NotUsed] =
+    Source.fromGraph(new EventsByTagSource(
+      StorePool.taggedEventsStore(actorSystemConfiguration.getString(MapRDB.PATH_CONFIGURATION_KEY)),
+      system,
+      tag,
+      offset,
+      isStreamingQuery = false,
+      pollingIntervalMs = actorSystemConfiguration.getLong(MapRDB.EVENTS_POLLING_INTERVAL))
+    )
+
+  /**
+   * Query events that have a specific tag. A tag can for example correspond to an
+   * aggregate root type (in DDD terminology).
+   *
+   * The consumer can keep track of its current position in the event stream by storing the
+   * `offset` and restart the query from a given `offset` after a crash/restart.
+   *
+   * The exact meaning of the `offset` depends on the journal and must be documented by the
+   * read journal plugin. It may be a sequential id number that uniquely identifies the
+   * position of each event within the event stream. Distributed data stores cannot easily
+   * support those semantics and they may use a weaker meaning. For example it may be a
+   * timestamp (taken when the event was created or stored). Timestamps are not unique and
+   * not strictly ordered, since clocks on different machines may not be synchronized.
+   *
+   * The returned event stream should be ordered by `offset` if possible, but this can also be
+   * difficult to fulfill for a distributed data store. The order must be documented by the
+   * read journal plugin.
+   *
+   * The stream is not completed when it reaches the end of the currently stored events,
+   * but it continues to push new events when new events are persisted.
+   * Corresponding query that is completed when it reaches the end of the currently
+   * stored events is provided by [[CurrentEventsByTagQuery#currentEventsByTag]].
+   */
+  override def eventsByTag(tag: String, offset: Offset): Source[EventEnvelope, NotUsed] =
+    Source.fromGraph(new EventsByTagSource(
+      StorePool.taggedEventsStore(actorSystemConfiguration.getString(MapRDB.PATH_CONFIGURATION_KEY)),
+      system,
+      tag,
+      offset,
       isStreamingQuery = true,
       pollingIntervalMs = actorSystemConfiguration.getLong(MapRDB.EVENTS_POLLING_INTERVAL))
     )

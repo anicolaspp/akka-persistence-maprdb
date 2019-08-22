@@ -1,6 +1,5 @@
 package com.github.anicolaspp.akka.persistence.ojai.stores
 
-import com.github.anicolaspp.akka.persistence.ojai.IdsStore
 import com.github.anicolaspp.akka.persistence.ojai.stores.StorePool.initializeStoreInPathIfNeeded
 import org.ojai.store.{Connection, DocumentStore}
 
@@ -11,7 +10,7 @@ private case class PersistenceEntitiesIdsStore(path: String)(implicit connection
 }
 
 /**
- * There is a single instance of the ids stores.
+ * There is a single instance of [[IdsStore]]
  */
 object PersistenceEntitiesIdsStore {
   private var idStore: IdsStore = _

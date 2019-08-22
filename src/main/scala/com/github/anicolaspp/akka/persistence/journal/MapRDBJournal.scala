@@ -135,6 +135,5 @@ class MapRDBJournal extends AsyncWriteJournal
       .tags
       .map(tag => Journal.tagToMapRDBRow(tag, eventSerializedRepresentation))
       .foreach(storesPool.getTagsStore().insert)
-
 }
 

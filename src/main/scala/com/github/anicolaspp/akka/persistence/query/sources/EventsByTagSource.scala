@@ -6,39 +6,36 @@ import akka.persistence.query.{EventEnvelope, Offset}
 import akka.stream.stage.{GraphStage, GraphStageLogic}
 import akka.stream.{Attributes, Outlet, SourceShape}
 import com.github.anicolaspp.akka.persistence.journal.Journal
-import com.github.anicolaspp.akka.persistence.query.subscriber.{PersistenceEntityEventsPollingSubscriber, Subscription}
+import com.github.anicolaspp.akka.persistence.query.subscriber.{EventsByTagPollingSubscriber, Subscription}
 import org.ojai.Document
 import org.ojai.store.{Connection, DocumentStore}
 
 import scala.util.{Failure, Success, Try}
 
-class EventsByPersistenceIdSource(store: DocumentStore,
-                                  system: ActorSystem,
-                                  fromSequenceNr: Long,
-                                  toSequenceNr: Long,
-                                  isStreamingQuery: Boolean,
-                                  pollingIntervalMs: Long = 1000)(implicit connection: Connection)
+class EventsByTagSource(store: DocumentStore,
+                        system: ActorSystem,
+                        tag: String,
+                        offset: Offset,
+                        isStreamingQuery: Boolean,
+                        pollingIntervalMs: Long = 1000)(implicit connection: Connection)
   extends GraphStage[SourceShape[EventEnvelope]] {
 
-
   private val out: Outlet[EventEnvelope] = if (isStreamingQuery) {
-    Outlet("CurrentEventsByPersistenceIdSource")
+    Outlet("CurrentEventsByTag")
   } else {
-    Outlet("EventsByPersistenceId")
+    Outlet("EventsByTag")
   }
 
   override def shape: SourceShape[EventEnvelope] = SourceShape(out)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new QueryShapeLogic[EventEnvelope](shape, system, isStreamingQuery, pollingIntervalMs) {
 
-    import com.github.anicolaspp.akka.persistence.MapRDB._
-
     /**
      * Implementors should define what kind of subscription they are going to use.
      *
      * @return A subscription implementation.
      */
-    override def eventSubscription: Subscription[Seq[Document]] = new PersistenceEntityEventsPollingSubscriber(store, fromSequenceNr, toSequenceNr, isStreamingQuery)
+    def eventSubscription: Subscription[Seq[Document]] = new EventsByTagPollingSubscriber(store, tag, isStreamingQuery, offset)
 
     /**
      * Every time the eventSubscription has new messages, it calls the callback function that in turns, uses getEvents
@@ -47,11 +44,13 @@ class EventsByPersistenceIdSource(store: DocumentStore,
      * @param docs The list of documents received from the eventSubscription.
      * @return A list of events generated from the received sequence of documents.
      */
-    override def getEvents(docs: Seq[Document]): Try[Seq[EventEnvelope]] = {
+    def getEvents(docs: Seq[Document]): Try[Seq[EventEnvelope]] = {
       val maybeEventEnvelopes = docs
         .map { document =>
-          fromBytes[PersistentRepr](Journal.getBinaryRepresentationFrom(document)) match {
-            case Success(pr) => Some(EventEnvelope(Offset.sequence(document.getIdBinary.toLong()), document.getString("persistenceId"), document.getIdBinary.toLong(), pr))
+          val inner = connection.newDocument(document.getMap("inner"))
+
+          fromBytes[PersistentRepr](Journal.getBinaryRepresentationFrom(inner)) match {
+            case Success(pr) => Some(EventEnvelope(Offset.sequence(document.getIdString.toLong), pr.persistenceId, pr.sequenceNr, pr))
             case Failure(_) => None
           }
         }
@@ -62,6 +61,5 @@ class EventsByPersistenceIdSource(store: DocumentStore,
         Failure(new Throwable(s"Some events failed to deserialize"))
       }
     }
-
   }
 }

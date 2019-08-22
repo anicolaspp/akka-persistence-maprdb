@@ -1,6 +1,5 @@
 package com.github.anicolaspp.akka.persistence.ojai.stores
 
-import com.github.anicolaspp.akka.persistence.ojai.TagsStore
 import com.github.anicolaspp.akka.persistence.ojai.stores.StorePool.initializeStoreInPathIfNeeded
 import org.ojai.store.{Connection, DocumentStore}
 
@@ -11,7 +10,7 @@ private case class TaggedEventsStore(path: String)(implicit connection: Connecti
 }
 
 /**
- * There is a single instance of this tagged events stores
+ * There is a single instance of [[TagsStore]]
  */
 object TaggedEventsStore {
   private var taggedEventsStore: TagsStore = _
