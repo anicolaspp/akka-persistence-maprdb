@@ -18,6 +18,7 @@ This is a plugin for Akka Persistence that uses MapR-DB as backend. It implement
   - [Querying Tagged Events](https://github.com/anicolaspp/akka-persistence-maprdb#querying-tagged-events)
   - [Ordering and Offsets](https://github.com/anicolaspp/akka-persistence-maprdb#ordering-and-offsets)
   - [MapR-DB Tagged Structure](https://github.com/anicolaspp/akka-persistence-maprdb#mapR-DB-tagged-structure)
+- [MapR-DB Performane](https://github.com/anicolaspp/akka-persistence-maprdb#mapr-db-performance)
 
 
 ## Linking
