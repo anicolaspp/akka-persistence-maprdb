@@ -17,7 +17,7 @@ This is a plugin for Akka Persistence that uses MapR-DB as backend. It implement
   - [Tagging Events and Events by Tags](https://github.com/anicolaspp/akka-persistence-maprdb#tagging-events-and-events-by-tags)
   - [Querying Tagged Events](https://github.com/anicolaspp/akka-persistence-maprdb#querying-tagged-events)
   - [Ordering and Offsets](https://github.com/anicolaspp/akka-persistence-maprdb#ordering-and-offsets)
-  - [MapR-DB Tagged structure](https://github.com/anicolaspp/akka-persistence-maprdb#mapR-DB-tagged-structure)
+  - [MapR-DB Tagged Structure](https://github.com/anicolaspp/akka-persistence-maprdb#mapR-DB-tagged-structure)
 
 
 ## Linking
@@ -379,7 +379,7 @@ In general, the offset is applied to the resultant stream of events associated w
 given offsets is applied only once, meaning that is your query is `eventsByTag` it will move the cursor the offset, but
 all new events after the offset will be pushed in the stream as they arrive.                                                            
 
-### MapR-DB Tagged structure. 
+### MapR-DB Tagged Structure. 
 
 The internal structure being used for storing `Tagged` events is very simplistic. However, the number of `Tagged` events
 can be overwhelming. Even though, MapR-DB is insanely fast for the queries being used, it might be a good idea to 
